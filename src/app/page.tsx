@@ -1,12 +1,19 @@
 import { Card, CardBody } from "@nextui-org/react";
 
+import AddGameScoreForm from "@/components/add-game-score-form";
+import { ScoreCardList } from "@/components/score-card-list";
+
 export default async function Home() {
   return (
-    <Card className="mx-auto mt-4 max-w-md">
-      <CardBody className="text-center">
-        <h1 className="text-5xl">Next.js Starter</h1>
-        <p className="text-xl">A simple starter for Next.js</p>
-      </CardBody>
-    </Card>
+    <div className="flex min-h-screen flex-col items-center justify-start">
+      <Card className="mx-auto mt-4 max-w-md">
+        <CardBody className="text-center">
+          <h1 className="text-5xl">Daily Game Scores</h1>
+          <p className="text-xl">A place to share your scores</p>
+        </CardBody>
+      </Card>
+      <AddGameScoreForm />
+      <ScoreCardList />
+    </div>
   );
 }

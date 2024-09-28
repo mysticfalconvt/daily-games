@@ -12,7 +12,6 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
 } from "@nextui-org/react";
-import { IconPackage } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 
 import AuthButton from "./auth-button";
@@ -30,16 +29,10 @@ export default function AppNavbar() {
   ];
 
   if (status === "authenticated") {
-    menuItems.push(
-      {
-        label: "Profile",
-        href: "/profile",
-      },
-      {
-        label: "Guestbook",
-        href: "/guestbook",
-      }
-    );
+    menuItems.push({
+      label: "Profile",
+      href: "/profile",
+    });
   }
 
   return (
@@ -50,8 +43,7 @@ export default function AppNavbar() {
           className="sm:hidden"
         />
         <NavbarBrand>
-          <IconPackage />
-          <p className="font-bold text-inherit">Next.js Starter</p>
+          <Link href="https://boskind.tech">Boskind.tech</Link>
         </NavbarBrand>
       </NavbarContent>
 

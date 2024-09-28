@@ -42,6 +42,7 @@ export default function AuthButton({ minimal = true }: { minimal?: boolean }) {
             className="transition-transform"
             showFallback={!data.user?.image}
             src={data.user?.image || ""}
+            fallback={data.user?.name}
           />
         </DropdownTrigger>
         <DropdownMenu aria-label="Profile Actions" variant="flat">

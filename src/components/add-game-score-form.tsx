@@ -9,8 +9,9 @@ import { useFormState } from "react-dom";
 
 import { createGameScoreEntry } from "@/app/actions";
 import { InsertGameScoreEntrySchema } from "@/db/schema/game-score-entries";
-import { GameType } from "@/types/types";
+import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
+import { getGameType } from "./get-game-type";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 
@@ -24,7 +25,7 @@ export default function AddGameScoreForm() {
     lastResult,
     onValidate({ formData }) {
       formData.set("gameType", gameType);
-      formData.set("rating", gameRating);
+      formData.set("rating", String(gameRating));
       console.log(
         parseWithZod(formData, { schema: InsertGameScoreEntrySchema })
       );
@@ -36,7 +37,7 @@ export default function AddGameScoreForm() {
   form.initialValue = {
     score: gameScore,
     gameType: gameType,
-    rating: gameRating,
+    rating: String(gameRating),
     message: "",
   };
 
@@ -49,6 +50,9 @@ export default function AddGameScoreForm() {
         noValidate
         className="mt-4 flex w-80 flex-col gap-2"
       >
+        <p className="text-fg-600 text-center text-medium">
+          Game: {getPrettyGameType(gameType)}
+        </p>
         <Textarea
           label="Paste Game Score here"
           key={fields.score.key}
@@ -68,8 +72,8 @@ export default function AddGameScoreForm() {
           readOnly
           key={fields.gameType.key}
           value={gameType}
+          className="hidden"
         />
-
         <Input
           name={fields.rating.name}
           readOnly
@@ -96,21 +100,11 @@ export default function AddGameScoreForm() {
   );
 }
 
-const getGameType = (gameScore: string) => {
-  // This will have to handle many pastsed entries and tell what game they are from the entry.
-  // Here is an example for Framed
-  //   Framed #931
-  // 🎥 🟥 🟥 🟩 ⬛ ⬛ ⬛
-  // https://framed.wtf
-
-  if (gameScore.includes("https://framed.wtf")) {
-    return GameType.FRAMED;
-  }
-
-  return "EMOVIE";
-};
-
 const getGameRating = (gameScore: string) => {
+  const gameType = getGameType(gameScore);
+  if (gameType === "UNKNOWN") {
+    return 0;
+  }
   if (gameScore.includes("⭐️")) {
     return 1;
   }

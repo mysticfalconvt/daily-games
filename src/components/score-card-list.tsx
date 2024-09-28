@@ -1,4 +1,7 @@
+import { Avatar } from "@nextui-org/react";
+
 import db from "@/db";
+import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
 import { Card } from "./ui/card";
 
@@ -19,12 +22,23 @@ export const ScoreCardList = async () => {
       user: true,
     },
   });
-
+  console.log(listOfScores[0]);
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       {listOfScores?.map((score) => (
-        <Card key={score.id}>
-          <h2 className="text-2xl font-bold">{score.user.name}</h2>
+        <Card key={score.id} className="p-2">
+          <div className="flex items-center gap-2">
+            <Avatar
+              className="h-8 w-8 transition-transform"
+              showFallback={!score.user?.image}
+              src={score.user?.image || ""}
+              fallback={score.user?.name}
+            />
+            <h2 className="text-2xl font-bold">{score.user.name}</h2>
+          </div>
+          <h2 className="text-2xl font-bold">
+            {getPrettyGameType(score.gameType)} - {score.rating}
+          </h2>
           <p className="text-lg font-bold">{score.score}</p>
           <p className="text-lg">{score.message}</p>
         </Card>

@@ -15,6 +15,13 @@
       "when": 1727392459995,
       "tag": "0001_dazzling_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1727652341042,
+      "tag": "0002_fuzzy_ulik",
+      "breakpoints": true
     }
   ]
 }

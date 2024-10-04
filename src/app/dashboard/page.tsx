@@ -1,11 +1,8 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  SidebarLayout,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarLayout, SidebarTrigger } from "@/components/ui/sidebar";
 
 export default async function Page() {
-  const { cookies } = await import("next/headers")
+  const { cookies } = await import("next/headers");
   return (
     <SidebarLayout
       defaultOpen={cookies().get("sidebar:state")?.value === "true"}
@@ -17,5 +14,5 @@ export default async function Page() {
         </div>
       </main>
     </SidebarLayout>
-  )
+  );
 }

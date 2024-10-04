@@ -28,7 +28,7 @@ export function NavUser({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="ring-ring hover:bg-accent data-[state=open]:bg-accent w-full rounded-md outline-none focus-visible:ring-2">
+      <DropdownMenuTrigger className="w-full rounded-md outline-none ring-ring hover:bg-accent focus-visible:ring-2 data-[state=open]:bg-accent">
         <div className="flex items-center gap-2 px-2 py-1.5 text-left text-sm transition-all">
           <Avatar className="h-7 w-7 rounded-md border">
             <AvatarImage
@@ -40,11 +40,11 @@ export function NavUser({
           </Avatar>
           <div className="grid flex-1 leading-none">
             <div className="font-medium">{user.name}</div>
-            <div className="text-muted-foreground overflow-hidden text-xs">
+            <div className="overflow-hidden text-xs text-muted-foreground">
               <div className="line-clamp-1">{user.email}</div>
             </div>
           </div>
-          <ChevronsUpDown className="text-muted-foreground/50 ml-auto mr-0.5 h-4 w-4" />
+          <ChevronsUpDown className="ml-auto mr-0.5 h-4 w-4 text-muted-foreground/50" />
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -61,7 +61,7 @@ export function NavUser({
             </Avatar>
             <div className="grid flex-1">
               <div className="font-medium">{user.name}</div>
-              <div className="text-muted-foreground overflow-hidden text-xs">
+              <div className="overflow-hidden text-xs text-muted-foreground">
                 <div className="line-clamp-1">{user.email}</div>
               </div>
             </div>
@@ -70,21 +70,21 @@ export function NavUser({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className="gap-2">
-            <BadgeCheck className="text-muted-foreground h-4 w-4" />
+            <BadgeCheck className="h-4 w-4 text-muted-foreground" />
             Account
           </DropdownMenuItem>
           <DropdownMenuItem className="gap-2">
-            <CreditCard className="text-muted-foreground h-4 w-4" />
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
             Billing
           </DropdownMenuItem>
           <DropdownMenuItem className="gap-2">
-            <Bell className="text-muted-foreground h-4 w-4" />
+            <Bell className="h-4 w-4 text-muted-foreground" />
             Notifications
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2">
-          <LogOut className="text-muted-foreground h-4 w-4" />
+          <LogOut className="h-4 w-4 text-muted-foreground" />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

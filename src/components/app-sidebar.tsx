@@ -22,7 +22,6 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { StorageCard } from "@/components/storage-card";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -265,7 +264,7 @@ export function AppSidebar() {
         </SidebarItem>
         <SidebarItem className="mt-auto">
           <SidebarLabel>Help</SidebarLabel>
-          <NavSecondary items={data.navSecondary} />
+          {/* <NavSecondary items={data.navSecondary} /> */}
         </SidebarItem>
         <SidebarItem>
           <StorageCard />

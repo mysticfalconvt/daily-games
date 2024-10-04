@@ -48,6 +48,7 @@ export function NavMain({
           <li>
             <div className="relative flex items-center">
               <Link
+                // @ts-expect-error nextjs
                 href={item.url}
                 className="flex h-8 min-w-8 flex-1 items-center gap-2 overflow-hidden rounded-md px-1.5 text-sm font-medium outline-none ring-ring transition-all hover:bg-accent hover:text-accent-foreground focus-visible:ring-2"
               >
@@ -71,6 +72,7 @@ export function NavMain({
                 {item.items?.map((subItem) => (
                   <li key={subItem.title}>
                     <Link
+                      // @ts-expect-error nextjs
                       href={subItem.url}
                       className="flex h-8 min-w-8 items-center gap-2 overflow-hidden rounded-md px-2 text-sm font-medium text-muted-foreground ring-ring transition-all hover:bg-accent hover:text-accent-foreground focus-visible:ring-2"
                     >
@@ -120,6 +122,7 @@ function SidebarSearch({
           <div className="grid gap-1 p-1.5 text-sm">
             {results.map((result) => (
               <Link
+                // @ts-expect-error nextjs
                 href={result.url}
                 key={result.title}
                 className="rounded-md p-2.5 outline-none ring-ring hover:bg-accent hover:text-accent-foreground focus-visible:ring-2"
@@ -169,6 +172,7 @@ function SidebarSearch({
         <div className="grid gap-1 p-1.5 text-sm">
           {results.map((result) => (
             <Link
+              // @ts-expect-error nextjs
               href={result.url}
               key={result.title}
               className="rounded-md p-2.5 outline-none ring-ring hover:bg-accent hover:text-accent-foreground focus-visible:ring-2"

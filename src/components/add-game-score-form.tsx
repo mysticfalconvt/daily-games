@@ -27,9 +27,6 @@ export default function AddGameScoreForm() {
     onValidate({ formData }) {
       formData.set("gameType", gameType);
       formData.set("rating", String(gameRating));
-      console.log(
-        parseWithZod(formData, { schema: InsertGameScoreEntrySchema })
-      );
       return parseWithZod(formData, { schema: InsertGameScoreEntrySchema });
     },
     shouldValidate: "onBlur",
@@ -128,7 +125,6 @@ const getGameRating = (gameScore: string) => {
     const everythingBeforeSlash = gameScore.split("/")[0];
     const lastCharacter =
       everythingBeforeSlash[everythingBeforeSlash.length - 1];
-    console.log(lastCharacter, everythingBeforeSlash);
     const numberBeforeSlash = Number(lastCharacter);
     if (numberBeforeSlash > 0) {
       return numberBeforeSlash;
@@ -165,9 +161,7 @@ const getGameRating = (gameScore: string) => {
     // Enspelled #153 I solved today's puzzle in 3 words! 🟥🟥🟥🟥   🟥🟥🟥🟥   🟨 View my solution at https://enspelled.com/solution/153+aRROGfe+YGFmfuaZ+eGbqd
     // we need to get the number of words, in this case it is 3 so we are looking to get the character after "today's puzzle "
     const afterPuzzle = gameScore.split("today's puzzle in ")[1];
-    console.log("afterPuzzle", afterPuzzle);
     const nextCharacter = afterPuzzle[0];
-    console.log("nextCharacter", nextCharacter);
     return Number(nextCharacter);
   }
 
@@ -178,7 +172,6 @@ const getGameRating = (gameScore: string) => {
     const everythingBeforeSlash = gameScore.split("/6")[0];
     const lastCharacter =
       everythingBeforeSlash[everythingBeforeSlash.length - 1];
-    console.log(lastCharacter, everythingBeforeSlash);
     const numberBeforeSlash = Number(lastCharacter);
     if (numberBeforeSlash > 0) {
       return numberBeforeSlash;
@@ -211,7 +204,6 @@ const getGameRating = (gameScore: string) => {
     const everythingBeforeSlash = gameScore.split("/6")[0];
     const lastCharacter =
       everythingBeforeSlash[everythingBeforeSlash.length - 1];
-    console.log(lastCharacter, everythingBeforeSlash);
     const numberBeforeSlash = Number(lastCharacter);
     if (numberBeforeSlash > 0) {
       return numberBeforeSlash;
@@ -247,7 +239,6 @@ const getGameRating = (gameScore: string) => {
 
     const numberOfTries = triesMatch ? parseInt(triesMatch[1], 10) : 0;
     const numberOfStars = starsMatch ? starsMatch[1].length : 0;
-    console.log(numberOfTries, numberOfStars);
     return numberOfStars + 6 - numberOfTries;
   }
 

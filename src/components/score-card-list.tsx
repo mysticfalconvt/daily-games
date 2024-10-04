@@ -22,7 +22,6 @@ export const ScoreCardList = async () => {
       user: true,
     },
   });
-  console.log(listOfScores[0]);
   return (
     <div className="flex flex-col gap-1">
       {listOfScores?.map((score) => (

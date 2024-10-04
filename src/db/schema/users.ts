@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+// @ts-expect-error nextjs
 import { v4 as uuidv4 } from "uuid";
 
 const users = pgTable("user", {

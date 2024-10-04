@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+// @ts-expect-error nextjs
 import { v4 as uuidv4 } from "uuid";
 
 import users from "./users";

@@ -51,5 +51,9 @@ export const getGameType = (gameScore: string) => {
     return GameType.ENSPELLED;
   }
 
+  if (gameScore.includes("Colorfle")) {
+    return GameType.COLORFLE;
+  }
+
   return GameType.UNKNOWN;
 };

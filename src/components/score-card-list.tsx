@@ -26,7 +26,7 @@ export const ScoreCardList = async () => {
   return (
     <div className="flex flex-col gap-1">
       {listOfScores?.map((score) => (
-        <Card key={score.id} className="p-2">
+        <Card key={score.id} className="max-w-lg break-words p-2">
           <div className="flex items-center gap-2">
             <Avatar
               className="h-8 w-8 transition-transform"
@@ -39,7 +39,7 @@ export const ScoreCardList = async () => {
           <h2 className="text-2xl font-bold">
             {getPrettyGameType(score.gameType)} - {score.rating}
           </h2>
-          <p className="text-lg font-bold">{score.score}</p>
+          <p className="whitespace-pre-wrap text-lg font-bold">{score.score}</p>
           <p className="text-lg">{score.message}</p>
         </Card>
       ))}

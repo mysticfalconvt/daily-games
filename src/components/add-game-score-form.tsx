@@ -133,7 +133,7 @@ const getGameRating = (gameScore: string) => {
     if (numberBeforeSlash > 0) {
       return numberBeforeSlash;
     }
-    return 0;
+    return 7;
   }
 
   if (gameType === GameType.STRANDS) {
@@ -169,6 +169,86 @@ const getGameRating = (gameScore: string) => {
     const nextCharacter = afterPuzzle[0];
     console.log("nextCharacter", nextCharacter);
     return Number(nextCharacter);
+  }
+
+  if (gameType === GameType.BANDLE) {
+    // paste looks like this:
+    // Bandle #778 3/6 🟥🟥🟩⬜⬜⬜ Found: 392/399 (98.2%) Current Streak: 9 (max 85) #Bandle #Heardle #Wordle https://bandle.app/
+
+    const everythingBeforeSlash = gameScore.split("/6")[0];
+    const lastCharacter =
+      everythingBeforeSlash[everythingBeforeSlash.length - 1];
+    console.log(lastCharacter, everythingBeforeSlash);
+    const numberBeforeSlash = Number(lastCharacter);
+    if (numberBeforeSlash > 0) {
+      return numberBeforeSlash;
+    }
+    return 7;
+  }
+
+  if (gameType === GameType.JUMBLIE) {
+    // paste looks like this:
+    // Jumblie #1 🟠🟢🔴🔵 6 guesses in 53s https://jumblie.com
+    // Jumblie #364 🔵🔴🟠🟢 4 guesses in 1m 20s https://jumblie.com
+    // we need to get the number of guesses, and the time it took
+    const guessesMatch = gameScore.match(/(\d+)\s+guesses/);
+    const timeMatch = gameScore.match(/(\d+)(m)?\s*(\d*)s/);
+
+    const numberOfGuesses = guessesMatch ? parseInt(guessesMatch[1], 10) : 0;
+    let timeInSeconds = 0;
+
+    if (timeMatch) {
+      const minutes = timeMatch[2] ? parseInt(timeMatch[1], 10) : 0;
+      const seconds = timeMatch[3]
+        ? parseInt(timeMatch[3], 10)
+        : parseInt(timeMatch[1], 10);
+      timeInSeconds = minutes * 60 + seconds;
+    }
+    return 2 * (numberOfGuesses - 4) + timeInSeconds;
+  }
+
+  if (gameType === GameType.COLORFLE) {
+    const everythingBeforeSlash = gameScore.split("/6")[0];
+    const lastCharacter =
+      everythingBeforeSlash[everythingBeforeSlash.length - 1];
+    console.log(lastCharacter, everythingBeforeSlash);
+    const numberBeforeSlash = Number(lastCharacter);
+    if (numberBeforeSlash > 0) {
+      return numberBeforeSlash;
+    }
+    return 7;
+  }
+
+  if (gameType === GameType.TRAVLE_USA) {
+    // #travle_usa #474 +1 ✅🟧✅✅ https://travle.earth/usa
+    //  #travle_usa #472 +0 (Perfect) ✅✅✅✅ https://travle.earth/usa
+    //  we need to return the number after the +
+    const everythingAfterPlus = gameScore.split("+")[1];
+
+    const numberAfterPlus = Number(everythingAfterPlus[0]);
+    if (numberAfterPlus > 0) {
+      return numberAfterPlus;
+    }
+    return 0;
+  }
+
+  if (gameType === GameType.CONNECTIONS) {
+    // paste looks like this:
+    // Connections Puzzle #481 🟨🟨🟨🟨  🟩🟩🟩🟩 🟦🟦🟦🟦 🟪🟪🟪🟪
+    const gridMatch = gameScore.match(/(🟨|🟩|🟦|🟪){4}/g);
+
+    const numberOfTries = gridMatch ? gridMatch.length : 0;
+    return numberOfTries;
+  }
+
+  if (gameType === GameType.WHERE_TAKEN) {
+    const triesMatch = gameScore.match(/(\d+)\/6/);
+    const starsMatch = gameScore.match(/(⭐+)/);
+
+    const numberOfTries = triesMatch ? parseInt(triesMatch[1], 10) : 0;
+    const numberOfStars = starsMatch ? starsMatch[1].length : 0;
+    console.log(numberOfTries, numberOfStars);
+    return numberOfStars + 6 - numberOfTries;
   }
 
   return 0;

@@ -25,6 +25,8 @@ export const getPrettyGameType = (gameType: string) => {
       return "Jumblie";
     case GameType.ENSPELLED:
       return "Enspelled";
+    case GameType.COLORFLE:
+      return "Colorfle";
     default:
       return "Unknown";
   }

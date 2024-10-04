@@ -12,8 +12,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <NextUIProvider
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
+        // @ts-expect-error nextjs
         navigate={router.push}
         className="flex h-full w-full flex-col"
       >

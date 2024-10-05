@@ -31,7 +31,7 @@ export const ScoreCardList = async () => {
   return (
     <div className="flex flex-col gap-1">
       {listOfScores?.map((score) => (
-        <Card key={score.id} className="max-w-lg break-words p-2">
+        <Card key={score.id} className="max-w-sm break-words p-2 xl:max-w-lg">
           <div className="flex items-center gap-2">
             <Avatar
               className="h-8 w-8 transition-transform"

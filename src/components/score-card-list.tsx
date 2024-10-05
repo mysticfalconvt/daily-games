@@ -1,5 +1,7 @@
 import { Avatar } from "@nextui-org/react";
+import { getServerSession } from "next-auth";
 
+import options from "@/config/auth";
 import db from "@/db";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
@@ -22,6 +24,10 @@ export const ScoreCardList = async () => {
       user: true,
     },
   });
+  const session = (await getServerSession(options))!;
+  if (!session?.user) {
+    return null;
+  }
   return (
     <div className="flex flex-col gap-1">
       {listOfScores?.map((score) => (

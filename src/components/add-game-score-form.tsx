@@ -27,10 +27,16 @@ export default function AddGameScoreForm() {
     onValidate({ formData }) {
       formData.set("gameType", gameType);
       formData.set("rating", String(gameRating));
+      formData.set("gameScore", gameScore);
+      formData.set("message", message);
       return parseWithZod(formData, { schema: InsertGameScoreEntrySchema });
     },
-    onSubmit() {
+    onSubmit: () => {
+      console.log("submit");
       setGameScore("");
+      setGameType("");
+      setGameRating(0);
+      setMessage("");
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
@@ -60,6 +66,7 @@ export default function AddGameScoreForm() {
           name={fields.score.name}
           placeholder="Enter your message"
           className="w-full"
+          value={gameScore}
           isInvalid={!fields.message.valid}
           errorMessage={fields.score.errors}
           onChange={(e) => {

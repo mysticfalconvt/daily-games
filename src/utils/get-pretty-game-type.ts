@@ -4,7 +4,7 @@ import { GameType } from "@/types/types";
 export const getPrettyGameType = (gameType: string) => {
   switch (gameType) {
     case GameType.EMOVI:
-      return "eMovie";
+      return "e-Movi";
     case GameType.FRAMED:
       return "Framed";
     case GameType.WORDLE:

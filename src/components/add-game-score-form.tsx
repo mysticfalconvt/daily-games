@@ -117,10 +117,22 @@ const getGameRating = (gameScore: string) => {
     // paste looks like this:
     // https://www.nytimes.com/badges/games/mini.html?d=2024-09-29&t=38&c=6e91a31c0d103588059bfc260f2bd1cc&smid=url-share
     // we need to get the time from the url in this case it is t=38
-    const url = new URL(gameScore);
-    const time = url.searchParams.get("t");
-    if (time) {
-      return Number(time);
+    if (gameScore.includes("https://www.nytimes.com/badges/games/mini")) {
+      const url = new URL(gameScore);
+      const time = url.searchParams.get("t");
+      if (time) {
+        return Number(time);
+      }
+    }
+    if (gameScore.includes("New York Times Mini Crossword")) {
+      const timeMatch = gameScore.match(/in\s+(\d+):(\d+)!/);
+
+      const minutes = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+      const seconds = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+
+      const totalSeconds = minutes * 60 + seconds;
+
+      return totalSeconds;
     }
     return 0;
   }
@@ -250,6 +262,12 @@ const getGameRating = (gameScore: string) => {
     const numberOfTries = triesMatch ? parseInt(triesMatch[1], 10) : 0;
     const numberOfStars = starsMatch ? starsMatch[1].length : 0;
     return numberOfStars + 6 - numberOfTries;
+  }
+
+  if (gameType === GameType.FRAMED) {
+    // this one just needs to count the number of red squares and add 1 and return that
+    const numberOfRedSquares = gameScore.split("🟥").length - 1;
+    return numberOfRedSquares + 1;
   }
 
   return 0;

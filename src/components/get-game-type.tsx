@@ -24,7 +24,10 @@ export const getGameType = (gameScore: string) => {
   if (gameScore.includes("Strands")) {
     return GameType.STRANDS;
   }
-  if (gameScore.includes("https://www.nytimes.com/badges/games/mini")) {
+  if (
+    gameScore.includes("https://www.nytimes.com/badges/games/mini") ||
+    gameScore.includes("New York Times Mini Crossword")
+  ) {
     return GameType.MINI_CROSSWORD;
   }
 

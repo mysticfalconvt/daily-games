@@ -7,8 +7,8 @@ import Providers from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Next.js Starter App",
-  description: "A basic starter for next.js",
+  title: "Daily Game Scores",
+  description: "A place for friends to share their daily game scores",
 };
 
 export default function RootLayout({

@@ -29,6 +29,9 @@ export default function AddGameScoreForm() {
       formData.set("rating", String(gameRating));
       return parseWithZod(formData, { schema: InsertGameScoreEntrySchema });
     },
+    onSubmit() {
+      setGameScore("");
+    },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
   });

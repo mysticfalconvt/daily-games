@@ -33,6 +33,10 @@ export default function AppNavbar() {
       label: "Profile",
       href: "/profile",
     });
+    menuItems.push({
+      label: "by game scores",
+      href: "/by-game",
+    });
   }
 
   return (

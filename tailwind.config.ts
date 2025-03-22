@@ -56,9 +56,16 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
       },
+      textShadow: {
+        lg: "0 2px 4px rgba(0,0,0,0.2)",
+      },
     },
   },
   darkMode: ["class", "class"],
-  plugins: [nextui(), require("tailwindcss-animate")],
+  plugins: [
+    nextui(),
+    require("tailwindcss-animate"),
+    require("tailwindcss-textshadow"),
+  ],
 };
 export default config;

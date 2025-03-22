@@ -22,6 +22,7 @@ export default function AddGameScoreForm() {
   const [gameType, setGameType] = React.useState("");
   const [gameRating, setGameRating] = React.useState(0);
   const [message, setMessage] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
   const [form, fields] = useForm({
     lastResult,
     onValidate({ formData }) {
@@ -37,6 +38,7 @@ export default function AddGameScoreForm() {
       setGameType("");
       setGameRating(0);
       setMessage("");
+      setError(null);
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
@@ -46,6 +48,23 @@ export default function AddGameScoreForm() {
     gameType: gameType,
     rating: String(gameRating),
     message: "",
+  };
+
+  const handleGameScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newScore = e.target.value;
+    setGameScore(newScore);
+
+    const detectedGameType = getGameType(newScore);
+    setGameType(detectedGameType);
+    setGameRating(getGameRating(newScore));
+
+    // Reset error when user starts typing
+    setError(null);
+
+    // Validate game type
+    if (detectedGameType === GameType.UNKNOWN) {
+      setError("Unknown game type. Please paste a valid game score.");
+    }
   };
 
   return (
@@ -67,13 +86,9 @@ export default function AddGameScoreForm() {
           placeholder="Enter your message"
           className="w-full"
           value={gameScore}
-          isInvalid={!fields.message.valid}
-          errorMessage={fields.score.errors}
-          onChange={(e) => {
-            setGameScore(e.target.value);
-            setGameType(getGameType(e.target.value));
-            setGameRating(getGameRating(e.target.value));
-          }}
+          isInvalid={!fields.message.valid || !!error}
+          errorMessage={error || fields.score.errors}
+          onChange={handleGameScoreChange}
         />
         <Input
           name={fields.gameType.name}
@@ -102,7 +117,9 @@ export default function AddGameScoreForm() {
           onChange={(e) => setMessage(e.target.value || "")}
         />
 
-        <Button type="submit">Create</Button>
+        <Button type="submit" isDisabled={gameType === GameType.UNKNOWN}>
+          Create
+        </Button>
       </form>
     </Card>
   );
@@ -156,7 +173,7 @@ const getGameRating = (gameScore: string) => {
 
   if (gameType === GameType.STRANDS) {
     // paste looks like this:
-    // Strands #210 “Weed 'em and reap” 💡🔵🔵🟡 🔵🔵🔵🔵
+    // Strands #210 "Weed 'em and reap" 💡🔵🔵🟡 🔵🔵🔵🔵
     // we need to count the blue circles and yellow circles and then subtract thelight bulbs from the total
     const numberOfBlueCircles = gameScore.split("🔵").length - 1;
     const numberOfYellowCircles = gameScore.split("🟡").length - 1;

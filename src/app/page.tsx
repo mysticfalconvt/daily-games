@@ -162,11 +162,15 @@ export default async function Home() {
       </Card>
       <AvailableGamesList
         playedGames={playedGameTypes}
-        playedGamesWithRatings={userPlayedGames}
         lastWeekStats={{
           wins: lastWeekWinsCount,
           total: lastWeekTotal,
           ratio: lastWeekRatio,
+        }}
+        todayStats={{
+          wins: todayWinsCount,
+          total: todayTotal,
+          ratio: todayRatio,
         }}
       />
       <AddGameScoreForm />

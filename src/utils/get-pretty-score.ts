@@ -29,15 +29,15 @@ export const getPrettyScore = (gameType: GameType, score: string): string => {
       );
       return framedBoxesLine || score;
     case GameType.WHERE_TAKEN:
-      // Extract colored boxes and stars rows
+      // Extract all colored boxes rows and stars row
       const whereTakenLines = score.split("\n");
-      const whereTakenBoxesLine = whereTakenLines.find(
+      const whereTakenBoxesLines = whereTakenLines.filter(
         (line) =>
-          line.includes("🟦") || line.includes("🟥") || line.includes("⬜")
+          line.includes("🟦") || line.includes("🟥") || line.includes("⬜") || line.includes("🎉") || line.includes("➡️")
       );
       const starsLine = whereTakenLines.find((line) => line.includes("⭐"));
-      if (whereTakenBoxesLine && starsLine) {
-        return `${whereTakenBoxesLine}\n${starsLine}`;
+      if (whereTakenBoxesLines.length > 0 && starsLine) {
+        return `${whereTakenBoxesLines.join("\n")}\n${starsLine}`;
       }
       return score;
     case GameType.MINI_CROSSWORD:
@@ -125,6 +125,28 @@ export const getPrettyScore = (gameType: GameType, score: string): string => {
         )
         .join("\n");
       return connectionsBoxesLines || score;
+    case GameType.PIPS:
+      // Extract time and colored circle from "Pips #3 Hard 🔴\n3:40"
+      const timeMatch = score.match(/\d+:\d+/);
+      const circleMatch = score.match(/(🔴|🟠|🟡|🟢|🔵|🟣|⚫|⚪|🟤)/);
+      
+      if (timeMatch && circleMatch) {
+        return `${timeMatch[0]} ${circleMatch[0]}`;
+      }
+      return score;
+    case GameType.SCRANDLE:
+      // Extract only the colored boxes from "🟥🟥🟩🟩🟥🟩🟩🟩🟩🟩 7/10 | 2025-08-20 | https://scrandle.com"
+      const scrandleLines = score.split("\n");
+      const scrandleBoxesLine = scrandleLines.find(
+        (line) =>
+          line.includes("🟥") || line.includes("🟩") || line.includes("🟨")
+      );
+      if (scrandleBoxesLine) {
+        // Extract just the colored boxes part (before the score)
+        const scrandleBoxesMatch = scrandleBoxesLine.match(/(🟥|🟩|🟨)+/);
+        return scrandleBoxesMatch ? scrandleBoxesMatch[0] : score;
+      }
+      return score;
     case GameType.UNKNOWN:
       return score;
     default:

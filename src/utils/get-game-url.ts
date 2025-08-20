@@ -26,6 +26,10 @@ export function getGameUrl(gameType: GameType): string {
       return "https://travle.earth/usa";
     case GameType.WHERE_TAKEN:
       return "https://wheretakenusa.teuteuf.fr/";
+    case GameType.PIPS:
+      return "https://www.nytimes.com/games/pips/hard";
+    case GameType.SCRANDLE:
+      return "https://scrandle.com/";
     default:
       return "#";
   }

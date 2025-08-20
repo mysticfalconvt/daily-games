@@ -287,5 +287,27 @@ const getGameRating = (gameScore: string) => {
     return numberOfRedSquares + 1;
   }
 
+  if (gameType === GameType.PIPS) {
+    // paste looks like this: Pips #3 Hard 🔴\n3:40
+    // we want to extract the time in seconds (3:40 = 220 seconds)
+    const timeMatch = gameScore.match(/(\d+):(\d+)/);
+    if (timeMatch) {
+      const minutes = parseInt(timeMatch[1], 10);
+      const seconds = parseInt(timeMatch[2], 10);
+      return minutes * 60 + seconds;
+    }
+    return 0;
+  }
+
+  if (gameType === GameType.SCRANDLE) {
+    // paste looks like this: 🟥🟥🟩🟩🟥🟩🟩🟩🟩🟩 7/10 | 2025-08-20 | https://scrandle.com
+    // we want to extract the X from X/10, handling both single digits and 10/10
+    const scoreMatch = gameScore.match(/(\d+)\/10/);
+    if (scoreMatch) {
+      return parseInt(scoreMatch[1], 10);
+    }
+    return 0;
+  }
+
   return 0;
 };

@@ -16,6 +16,8 @@ export enum GameType {
   BANDLE = "BANDLE",
   JUMBLIE = "JUMBLIE",
   ENSPELLED = "ENSPELLED",
+  PIPS = "PIPS",
+  SCRANDLE = "SCRANDLE",
   UNKNOWN = "UNKNOWN",
 }
 
@@ -26,11 +28,13 @@ export const GAME_RATING_ORDER: Record<GameType, RatingOrder> = {
   [GameType.WHERE_TAKEN]: RatingOrder.HIGHEST_FIRST,
   [GameType.CONNECTIONS]: RatingOrder.LOWEST_FIRST,
   [GameType.COLORFLE]: RatingOrder.LOWEST_FIRST,
-  [GameType.STRANDS]: RatingOrder.LOWEST_FIRST,
+  [GameType.STRANDS]: RatingOrder.HIGHEST_FIRST,
   [GameType.MINI_CROSSWORD]: RatingOrder.LOWEST_FIRST,
   [GameType.TRAVLE_USA]: RatingOrder.LOWEST_FIRST,
   [GameType.BANDLE]: RatingOrder.LOWEST_FIRST,
   [GameType.JUMBLIE]: RatingOrder.LOWEST_FIRST,
   [GameType.ENSPELLED]: RatingOrder.LOWEST_FIRST,
+  [GameType.PIPS]: RatingOrder.LOWEST_FIRST,
+  [GameType.SCRANDLE]: RatingOrder.HIGHEST_FIRST,
   [GameType.UNKNOWN]: RatingOrder.LOWEST_FIRST,
 };

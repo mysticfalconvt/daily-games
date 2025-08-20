@@ -58,5 +58,13 @@ export const getGameType = (gameScore: string) => {
     return GameType.COLORFLE;
   }
 
+  if (gameScore.includes("Pips #")) {
+    return GameType.PIPS;
+  }
+
+  if (gameScore.includes("https://scrandle.com")) {
+    return GameType.SCRANDLE;
+  }
+
   return GameType.UNKNOWN;
 };

@@ -24,6 +24,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedFriendRequests: many(friendRequests, { relationName: "receiver" }),
   friendships: many(friendships, { relationName: "user" }),
   friendOf: many(friendships, { relationName: "friend" }),
+  scoreComments: many("scoreComments"),
+  scoreReactions: many("scoreReactions"),
 }));
 
 export default users;

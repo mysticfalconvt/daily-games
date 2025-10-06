@@ -11,6 +11,14 @@ export {
   default as gameScoreEntries,
   gameScoreEntriesRelations
 } from "./game-score-entries";
+export {
+  default as scoreComments,
+  scoreCommentsRelations
+} from "./score-comments";
+export {
+  default as scoreReactions,
+  scoreReactionsRelations
+} from "./score-reactions";
 export { default as sessions } from "./sessions";
 export { default as users, usersRelations } from "./users";
 

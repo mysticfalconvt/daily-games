@@ -6,6 +6,7 @@ import { Avatar } from "@nextui-org/react";
 import { useSession } from "next-auth/react";
 
 import { ViewToggle } from "@/components/friends/view-toggle";
+import { ScoreInteractions } from "@/components/interactions/score-interactions";
 import { GAME_RATING_ORDER, GameType, RatingOrder } from "@/types/types";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 import { getPrettyScore } from "@/utils/get-pretty-score";
@@ -227,6 +228,12 @@ export const ScoreCardList = () => {
                             </p>
                           )}
                         </div>
+
+                        {/* Score Interactions */}
+                        <ScoreInteractions
+                          scoreId={score.id}
+                          currentUserId={session.user.id}
+                        />
                       </div>
                     ))}
                   </div>

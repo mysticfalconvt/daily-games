@@ -22,6 +22,20 @@
       "when": 1727652341042,
       "tag": "0002_fuzzy_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759750024293,
+      "tag": "0003_funny_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759751494096,
+      "tag": "0004_lively_tarantula",
+      "breakpoints": true
     }
   ]
 }

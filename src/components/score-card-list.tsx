@@ -1,8 +1,11 @@
-import { Avatar } from "@nextui-org/react";
-import { getServerSession } from "next-auth";
+"use client";
 
-import options from "@/config/auth";
-import db from "@/db";
+import { useEffect, useState } from "react";
+
+import { Avatar } from "@nextui-org/react";
+import { useSession } from "next-auth/react";
+
+import { ViewToggle } from "@/components/friends/view-toggle";
 import { GAME_RATING_ORDER, GameType, RatingOrder } from "@/types/types";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 import { getPrettyScore } from "@/utils/get-pretty-score";
@@ -32,27 +35,53 @@ type GroupedScores = {
   };
 };
 
-export const ScoreCardList = async () => {
-  const listOfScores = (await db.query.gameScoreEntries.findMany({
-    orderBy(fields, operators) {
-      return operators.desc(fields.createdAt);
-    },
+export const ScoreCardList = () => {
+  const { data: session } = useSession();
+  const [listOfScores, setListOfScores] = useState<ScoreEntry[]>([]);
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [hasFriends, setHasFriends] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-    where(fields, operators) {
-      //    only get created in the last week
-      return operators.gte(
-        fields.createdAt,
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      );
-    },
-    with: {
-      user: true,
-    },
-  })) as ScoreEntry[];
+  useEffect(() => {
+    const fetchScores = async () => {
+      if (!session?.user?.id) return;
 
-  const session = (await getServerSession(options))!;
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}`);
+        if (response.ok) {
+          const data = await response.json();
+          setListOfScores(data.scores as ScoreEntry[]);
+          setHasFriends(data.hasFriends);
+        } else {
+          console.error("Failed to fetch scores");
+        }
+      } catch (error) {
+        console.error("Error fetching scores:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchScores();
+  }, [session?.user?.id, showAllUsers]);
+
   if (!session?.user) {
     return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-4">
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Group scores by date and game type
@@ -143,11 +172,10 @@ export const ScoreCardList = async () => {
                     {sortedScores.map((score) => (
                       <div
                         key={score.id}
-                        className={`flex flex-col gap-2 border-t pt-2 ${
-                          score.user.id === session.user.id
-                            ? "rounded-lg bg-accent/40 p-2"
-                            : ""
-                        }`}
+                        className={`flex flex-col gap-2 border-t pt-2 ${score.user.id === session.user.id
+                          ? "rounded-lg bg-accent/40 p-2"
+                          : ""
+                          }`}
                       >
                         <div className="flex items-center gap-2">
                           <Avatar
@@ -207,6 +235,11 @@ export const ScoreCardList = async () => {
             })}
         </div>
       ))}
+      <ViewToggle
+        showAllUsers={showAllUsers}
+        onToggle={setShowAllUsers}
+        hasFriends={hasFriends}
+      />
     </div>
   );
 };

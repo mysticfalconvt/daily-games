@@ -1,31 +1,58 @@
-import { getServerSession } from "next-auth";
+"use client";
 
-import options from "@/config/auth";
-import db from "@/db";
+import { useEffect, useState } from "react";
+
+import { useSession } from "next-auth/react";
+
+import { ViewToggle } from "@/components/friends/view-toggle";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
 import { Card } from "./ui/card";
 
-export const ByGameScoreList = async () => {
-  const listOfScores = await db.query.gameScoreEntries.findMany({
-    orderBy(fields, operators) {
-      return operators.desc(fields.createdAt);
-    },
+export const ByGameScoreList = () => {
+  const { data: session } = useSession();
+  const [listOfScores, setListOfScores] = useState<any[]>([]);
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [hasFriends, setHasFriends] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-    where(fields, operators) {
-      //    only get created in the last week
-      return operators.gte(
-        fields.createdAt,
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      );
-    },
-    with: {
-      user: true,
-    },
-  });
-  const session = (await getServerSession(options))!;
+  useEffect(() => {
+    const fetchScores = async () => {
+      if (!session?.user?.id) return;
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}`);
+        if (response.ok) {
+          const data = await response.json();
+          setListOfScores(data.scores);
+          setHasFriends(data.hasFriends);
+        } else {
+          console.error("Failed to fetch scores");
+        }
+      } catch (error) {
+        console.error("Error fetching scores:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchScores();
+  }, [session?.user?.id, showAllUsers]);
+
   if (!session?.user) {
     return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="animate-pulse space-y-4">
+          <div className="h-24 bg-gray-200 rounded"></div>
+          <div className="h-24 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   const scoresByGameType = listOfScores.reduce(
@@ -102,6 +129,11 @@ export const ByGameScoreList = async () => {
           </Card>
         );
       })}
+      <ViewToggle
+        showAllUsers={showAllUsers}
+        onToggle={setShowAllUsers}
+        hasFriends={hasFriends}
+      />
     </div>
   );
 };

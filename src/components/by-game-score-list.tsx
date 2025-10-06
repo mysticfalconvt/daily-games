@@ -11,7 +11,12 @@ import { Card } from "./ui/card";
 
 export const ByGameScoreList = () => {
   const { data: session } = useSession();
-  const [listOfScores, setListOfScores] = useState<any[]>([]);
+  const [listOfScores, setListOfScores] = useState<Array<{
+    id: string;
+    gameType: string;
+    rating: string;
+    user?: { id: string; name?: string; image?: string };
+  }>>([]);
   const [showAllUsers, setShowAllUsers] = useState(false);
   const [hasFriends, setHasFriends] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

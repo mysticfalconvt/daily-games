@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         const searchResults = await db.query.users.findMany({
             where: (fields, { and, not, eq }) => and(
                 ilike(fields.email, `%${query}%`),
-                not(eq(fields.email, session.user.email))
+                not(eq(fields.email, session.user.email!))
             ),
             columns: {
                 id: true,

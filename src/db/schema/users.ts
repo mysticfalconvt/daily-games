@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import friendRequests from "./friend-requests";
 import friendships from "./friendships";
 import gameScoreEntries from "./game-score-entries";
+import scoreComments from "./score-comments";
+import scoreReactions from "./score-reactions";
 
 const users = pgTable("user", {
   id: text("id")
@@ -24,8 +26,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedFriendRequests: many(friendRequests, { relationName: "receiver" }),
   friendships: many(friendships, { relationName: "user" }),
   friendOf: many(friendships, { relationName: "friend" }),
-  scoreComments: many("scoreComments"),
-  scoreReactions: many("scoreReactions"),
+  scoreComments: many(scoreComments),
+  scoreReactions: many(scoreReactions),
 }));
 
 export default users;

@@ -26,10 +26,10 @@ interface FriendRequestsListProps {
 }
 
 export function FriendRequestsList({ requests, onUpdate }: FriendRequestsListProps) {
-    const [loadingStates, setLoadingStates] = useState<Record<string, 'accept' | 'decline' | null>>({});
+    const [loadingStates, setLoadingStates] = useState<Record<string, "accept" | "decline" | null>>({});
 
     const handleAccept = async (requestId: string) => {
-        setLoadingStates(prev => ({ ...prev, [requestId]: 'accept' }));
+        setLoadingStates(prev => ({ ...prev, [requestId]: "accept" }));
 
         try {
             const response = await fetch("/api/friends/accept", {
@@ -55,7 +55,7 @@ export function FriendRequestsList({ requests, onUpdate }: FriendRequestsListPro
     };
 
     const handleDecline = async (requestId: string) => {
-        setLoadingStates(prev => ({ ...prev, [requestId]: 'decline' }));
+        setLoadingStates(prev => ({ ...prev, [requestId]: "decline" }));
 
         try {
             const response = await fetch("/api/friends/decline", {
@@ -118,7 +118,7 @@ export function FriendRequestsList({ requests, onUpdate }: FriendRequestsListPro
                                 size="sm"
                                 color="success"
                                 variant="flat"
-                                isLoading={loadingStates[request.id] === 'accept'}
+                                isLoading={loadingStates[request.id] === "accept"}
                                 isDisabled={!!loadingStates[request.id]}
                                 onClick={() => handleAccept(request.id)}
                             >
@@ -128,7 +128,7 @@ export function FriendRequestsList({ requests, onUpdate }: FriendRequestsListPro
                                 size="sm"
                                 color="danger"
                                 variant="flat"
-                                isLoading={loadingStates[request.id] === 'decline'}
+                                isLoading={loadingStates[request.id] === "decline"}
                                 isDisabled={!!loadingStates[request.id]}
                                 onClick={() => handleDecline(request.id)}
                             >

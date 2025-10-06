@@ -22,13 +22,11 @@ const gameScoreEntries = pgTable("gameScore_entries", {
 
 export const gameScoreEntriesRelations = relations(
   gameScoreEntries,
-  ({ one, many }) => ({
+  ({ one }) => ({
     user: one(users, {
       fields: [gameScoreEntries.userId],
       references: [users.id],
     }),
-    comments: many("scoreComments"),
-    reactions: many("scoreReactions"),
   })
 );
 

@@ -5,6 +5,7 @@ import * as React from "react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Button, Textarea } from "@nextui-org/react";
+import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 
 import { createGameScoreEntry } from "@/app/actions";
@@ -17,12 +18,24 @@ import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 
 export default function AddGameScoreForm() {
+  const router = useRouter();
   const [lastResult, action] = useFormState(createGameScoreEntry, undefined);
   const [gameScore, setGameScore] = React.useState("");
   const [gameType, setGameType] = React.useState("");
   const [gameRating, setGameRating] = React.useState(0);
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  
+  // Trigger router refresh when form is successfully submitted
+  React.useEffect(() => {
+    if (lastResult?.status === "success") {
+      // Mark that a score was submitted (for components that mount after redirect)
+      sessionStorage.setItem("scoreSubmitted", Date.now().toString());
+      // Dispatch a custom event to trigger refetch in score list components
+      window.dispatchEvent(new CustomEvent("scoreSubmitted"));
+      router.refresh();
+    }
+  }, [lastResult, router]);
   const [form, fields] = useForm({
     lastResult,
     onValidate({ formData }) {

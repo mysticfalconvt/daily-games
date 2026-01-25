@@ -21,7 +21,14 @@ export async function GET(request: NextRequest) {
         const scores = await ScoreFilterService.getWeeklyFilteredScores(session.user.id, showAllUsers);
         const hasFriends = !(await ScoreFilterService.shouldShowAllUsers(session.user.id));
 
-        return NextResponse.json({ scores, hasFriends }, { status: 200 });
+        return NextResponse.json({ scores, hasFriends }, { 
+            status: 200,
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            },
+        });
     } catch (error) {
         console.error("Error fetching weekly scores:", error);
 

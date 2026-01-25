@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useSession } from "next-auth/react";
 
@@ -21,29 +21,48 @@ export const ByGameScoreList = () => {
   const [hasFriends, setHasFriends] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchScores = async () => {
-      if (!session?.user?.id) return;
+  const fetchScores = useCallback(async () => {
+    if (!session?.user?.id) return;
 
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}`);
-        if (response.ok) {
-          const data = await response.json();
-          setListOfScores(data.scores);
-          setHasFriends(data.hasFriends);
-        } else {
-          console.error("Failed to fetch scores");
-        }
-      } catch (error) {
-        console.error("Error fetching scores:", error);
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}&t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setListOfScores(data.scores);
+        setHasFriends(data.hasFriends);
+      } else {
+        console.error("Failed to fetch scores");
       }
+    } catch (error) {
+      console.error("Error fetching scores:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session?.user?.id, showAllUsers]);
+
+  useEffect(() => {
+    fetchScores();
+  }, [fetchScores]);
+
+  // Listen for score submission events to refetch
+  useEffect(() => {
+    const handleScoreSubmitted = () => {
+      fetchScores();
     };
 
-    fetchScores();
-  }, [session?.user?.id, showAllUsers]);
+    // Check if a score was submitted (handles page reload after redirect)
+    const scoreSubmitted = sessionStorage.getItem("scoreSubmitted");
+    if (scoreSubmitted) {
+      sessionStorage.removeItem("scoreSubmitted");
+      fetchScores();
+    }
+
+    window.addEventListener("scoreSubmitted", handleScoreSubmitted);
+    return () => {
+      window.removeEventListener("scoreSubmitted", handleScoreSubmitted);
+    };
+  }, [fetchScores]);
 
   if (!session?.user) {
     return null;

@@ -14,6 +14,12 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     UMAMI_ID: z.string().optional(),
+    // Build-time only: uploading source maps to Bugsink is skipped unless
+    // SENTRY_AUTH_TOKEN is set. See next.config.mjs.
+    SENTRY_URL: z.string().url().optional(),
+    SENTRY_ORG: z.string().optional(),
+    SENTRY_PROJECT: z.string().optional(),
+    SENTRY_AUTH_TOKEN: z.string().optional(),
     DB_MIGRATING: z
       .string()
       .refine((s) => s === "true" || s === "false")

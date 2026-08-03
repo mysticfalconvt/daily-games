@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { parseWithZod } from "@conform-to/zod";
 import { and, eq, gte } from "drizzle-orm";
@@ -58,5 +57,7 @@ export async function createGameScoreEntry(
   });
 
   revalidatePath("/");
-  redirect("/");
+  // Return success so the client can dispatch scoreSubmitted and refetch the feed.
+  // redirect() would skip that path and leave ScoreCardList on stale local state.
+  return submission.reply();
 }

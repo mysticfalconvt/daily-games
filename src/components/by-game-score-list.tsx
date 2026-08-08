@@ -76,8 +76,8 @@ export const ByGameScoreList = () => {
     return (
       <div className="flex flex-col gap-1">
         <div className="animate-pulse space-y-4">
-          <div className="h-24 rounded bg-gray-200"></div>
-          <div className="h-24 rounded bg-gray-200"></div>
+          <div className="h-24 rounded bg-muted"></div>
+          <div className="h-24 rounded bg-muted"></div>
         </div>
       </div>
     );

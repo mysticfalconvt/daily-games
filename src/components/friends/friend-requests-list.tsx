@@ -88,7 +88,7 @@ export function FriendRequestsList({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Friend Requests</h3>
-        <p className="text-gray-500">No pending friend requests</p>
+        <p className="text-muted-foreground">No pending friend requests</p>
       </div>
     );
   }
@@ -115,7 +115,9 @@ export function FriendRequestsList({
                 <p className="font-medium">
                   {request.sender.name || request.sender.email}
                 </p>
-                <p className="text-sm text-gray-500">{request.sender.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  {request.sender.email}
+                </p>
               </div>
             </div>
 

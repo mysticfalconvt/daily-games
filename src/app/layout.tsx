@@ -37,10 +37,28 @@ export default function RootLayout({
         )}
       </head>
       <body className="h-screen w-screen">
+        {/*
+          Backdrop lives here rather than on <main> so it stays put while the
+          content scrolls. Swap the pattern modifier to change the motif -
+          see globals.css for the alternatives.
+        */}
+        {/*
+          Arbitrary z values, not `-z-20`: Tailwind's default z-index scale has
+          no negative entries, so `-z-*` silently produced no rule at all and
+          these layers stacked wrongly.
+        */}
+        <div
+          aria-hidden
+          className="app-pattern--tiles pointer-events-none fixed inset-0 z-[-20]"
+        />
+        <div
+          aria-hidden
+          className="app-glow pointer-events-none fixed inset-0 z-[-10]"
+        />
         <Providers>
           <ImpersonationBanner />
           <AppNavbar />
-          <main className="flex-grow overflow-auto bg-[url(/light-bg.svg)] bg-cover dark:bg-[url(/dark-bg.svg)]">
+          <main className="flex-grow overflow-auto">
             <Suspense>{children}</Suspense>
           </main>
         </Providers>

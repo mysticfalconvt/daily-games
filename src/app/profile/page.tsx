@@ -9,7 +9,7 @@ export default async function Profile() {
   const { user } = await requireUser();
 
   return (
-    <div className="mx-auto mt-4 max-w-2xl space-y-6">
+    <div className="app-container space-y-6 py-8">
       <Card>
         <CardBody>
           <User

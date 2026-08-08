@@ -90,10 +90,10 @@ export const ReactionBar = ({
               onClick={() => handleToggleReaction(emojiType)}
               disabled={isLoading || isToggling}
               isLoading={isToggling}
-              className={`h-8 min-w-0 px-2 text-sm transition-all duration-200 ${
+              className={`h-8 min-w-0 px-2 text-sm transition-colors ${
                 userHasReacted
-                  ? "scale-105 border-primary bg-primary/20 dark:bg-primary/30"
-                  : "border-gray-200 hover:scale-105 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                  ? "border-primary bg-primary/15 text-primary dark:bg-primary/20"
+                  : "border-border bg-transparent hover:bg-muted"
               } ${isToggling ? "animate-pulse" : ""} `}
             >
               <span className="text-base">{emojiType}</span>
@@ -112,19 +112,19 @@ export const ReactionBar = ({
         placement="top"
       >
         <PopoverTrigger>
+          {/* Solid, themed fill. The dashed grey outline read as an empty
+              drop-zone rather than a button. */}
           <Button
             size="sm"
-            variant="bordered"
-            className="h-8 min-w-0 border-dashed border-gray-300 px-2 opacity-70 transition-all duration-200 hover:scale-105 hover:border-gray-400 hover:opacity-100 dark:border-gray-600 dark:hover:border-gray-500"
+            variant="flat"
+            className="h-8 min-w-0 bg-muted px-2 text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
             disabled={isLoading}
           >
-            <Smile size={14} className="text-gray-500 dark:text-gray-400" />
-            <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
-              React
-            </span>
+            <Smile size={14} />
+            <span className="ml-1 text-xs font-medium">React</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+        <PopoverContent className="border border-border bg-popover p-2">
           <div className="flex gap-1">
             {ALL_EMOJIS.map((emojiType) => (
               <Tooltip
@@ -139,7 +139,7 @@ export const ReactionBar = ({
                   isIconOnly
                   onClick={() => handleToggleReaction(emojiType)}
                   disabled={isLoading || togglingEmoji === emojiType}
-                  className="h-8 w-8 min-w-0 transition-all duration-200 hover:scale-110 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="h-8 w-8 min-w-0 transition-transform duration-150 hover:scale-110 hover:bg-muted"
                 >
                   <span className="text-base">{emojiType}</span>
                 </Button>

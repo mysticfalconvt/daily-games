@@ -64,7 +64,7 @@ export function SentRequestsList({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Sent Requests</h3>
-        <p className="text-gray-500">No pending sent requests</p>
+        <p className="text-muted-foreground">No pending sent requests</p>
       </div>
     );
   }
@@ -91,10 +91,10 @@ export function SentRequestsList({
                 <p className="font-medium">
                   {request.receiver.name || request.receiver.email}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {request.receiver.email}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Sent {new Date(request.createdAt).toLocaleDateString()}
                 </p>
               </div>

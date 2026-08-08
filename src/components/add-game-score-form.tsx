@@ -80,23 +80,36 @@ export default function AddGameScoreForm() {
     }
   };
 
+  const detected = gameType && gameType !== GameType.UNKNOWN;
+
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <form
         id={form.id}
         onSubmit={form.onSubmit}
         action={action}
         noValidate
-        className="mt-4 flex w-80 flex-col gap-2"
+        // Was a fixed w-80, which made this card narrower than everything
+        // around it.
+        className="flex w-full flex-col gap-3"
       >
-        <p className="text-fg-600 text-center text-medium">
-          Game: {getPrettyGameType(gameType)}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Add a score</h2>
+          {detected ? (
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              {getPrettyGameType(gameType)}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              Paste to detect
+            </span>
+          )}
+        </div>
         <Textarea
-          label="Paste Game Score here"
+          label="Paste your game score"
           key={fields.score.key}
           name={fields.score.name}
-          placeholder="Enter your message"
+          placeholder="e.g. Wordle 1,198 4/6"
           className="w-full"
           value={gameScore}
           isInvalid={!fields.message.valid || !!error}
@@ -122,16 +135,22 @@ export default function AddGameScoreForm() {
         <Textarea
           label="Message (optional)"
           name={fields.message.name}
-          placeholder="Enter your message"
+          placeholder="Say something about it..."
           className="w-full"
+          minRows={2}
           isInvalid={!fields.message.valid}
           errorMessage={fields.message.errors}
           value={message}
           onChange={(e) => setMessage(e.target.value || "")}
         />
 
-        <Button type="submit" isDisabled={gameType === GameType.UNKNOWN}>
-          Create
+        <Button
+          type="submit"
+          color="primary"
+          className="font-medium"
+          isDisabled={gameType === GameType.UNKNOWN}
+        >
+          Post score
         </Button>
       </form>
     </Card>

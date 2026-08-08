@@ -31,6 +31,9 @@ export const CommentSection = ({
     null
   );
   const [commentError, setCommentError] = useState<string | null>(null);
+  // Collapsed by default: an always-open composer on every score meant each
+  // card was mostly empty textarea.
+  const [isComposing, setIsComposing] = useState(false);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim() || isSubmitting) return;
@@ -40,6 +43,7 @@ export const CommentSection = ({
     try {
       await onAddComment(newComment.trim());
       setNewComment("");
+      setIsComposing(false);
     } catch (error) {
       console.error("Failed to add comment:", error);
       setCommentError(
@@ -83,40 +87,69 @@ export const CommentSection = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Comment Input */}
+      {/* Comment input, collapsed until asked for */}
       <div className="flex flex-col gap-2">
-        <Textarea
-          placeholder="Add a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          maxLength={500}
-          minRows={2}
-          maxRows={4}
-          disabled={isLoading || isSubmitting}
-          classNames={{
-            input: "text-sm text-foreground",
-            inputWrapper:
-              "bg-muted/20 border-border hover:border-border/80 focus-within:border-primary",
-            base: "data-[hover=true]:bg-muted/30",
-          }}
-        />
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            {newComment.length}/500 characters
-          </span>
-          <Button
-            size="sm"
-            color="primary"
-            onClick={handleSubmitComment}
-            disabled={
-              !newComment.trim() || isSubmitting || newComment.length > 500
-            }
-            isLoading={isSubmitting}
-            className="font-medium"
+        {!isComposing ? (
+          <button
+            type="button"
+            onClick={() => setIsComposing(true)}
+            disabled={isLoading}
+            className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
           >
-            Comment
-          </Button>
-        </div>
+            Add a comment...
+          </button>
+        ) : (
+          <>
+            <Textarea
+              placeholder="Add a comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              maxLength={500}
+              minRows={2}
+              maxRows={4}
+              autoFocus
+              disabled={isLoading || isSubmitting}
+              classNames={{
+                input: "text-sm text-foreground",
+                inputWrapper:
+                  "bg-muted/30 border-border hover:border-border/80 focus-within:border-primary",
+              }}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {newComment.length}/500
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => {
+                    setIsComposing(false);
+                    setNewComment("");
+                    setCommentError(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  color="primary"
+                  onClick={handleSubmitComment}
+                  disabled={
+                    !newComment.trim() ||
+                    isSubmitting ||
+                    newComment.length > 500
+                  }
+                  isLoading={isSubmitting}
+                  className="font-medium"
+                >
+                  Comment
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Comment Error */}
         {commentError && (

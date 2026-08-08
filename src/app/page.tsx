@@ -1,4 +1,3 @@
-import { Card, CardBody } from "@nextui-org/react";
 import { and, gte, inArray, lt } from "drizzle-orm";
 
 import AddGameScoreForm from "@/components/add-game-score-form";
@@ -17,16 +16,29 @@ export default async function Home() {
 
   if (!context) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-start gap-2">
-        <Card className="mx-auto mt-4 max-w-md">
-          <CardBody className="text-center">
-            <h1 className="text-5xl">Daily Game Scores</h1>
-            <p className="text-xl">A place to share your scores</p>
-            <p className="mt-2 text-sm text-default-500">
-              Sign in to post your scores and see your friends&apos;.
-            </p>
-          </CardBody>
-        </Card>
+      <div className="app-container flex flex-col items-center gap-6 py-20 text-center">
+        <span
+          aria-hidden
+          className="grid grid-cols-2 gap-1 rounded-2xl bg-primary/10 p-3"
+        >
+          <span className="h-5 w-5 rounded-md bg-primary" />
+          <span className="h-5 w-5 rounded-md bg-primary/30" />
+          <span className="h-5 w-5 rounded-md bg-primary/30" />
+          <span className="h-5 w-5 rounded-md bg-primary" />
+        </span>
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+            Daily Game Scores
+          </h1>
+          <p className="mt-3 text-lg text-muted-foreground">
+            Share your Wordle, Connections and Strands results with friends, and
+            see who actually won today.
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Use <span className="font-medium text-foreground">Sign in</span> above
+          to get started.
+        </p>
       </div>
     );
   }
@@ -181,13 +193,18 @@ export default async function Home() {
     lastWeekTotal > 0 ? `${lastWeekWinsCount}/${lastWeekTotal}` : "0/0";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start gap-2">
-      <Card className="mx-auto mt-4 max-w-md">
-        <CardBody className="text-center">
-          <h1 className="text-5xl">Daily Game Scores</h1>
-          <p className="text-xl">A place to share your scores</p>
-        </CardBody>
-      </Card>
+    // One container width for every section. The header, games panel, form and
+    // feed each used to set their own max-width, which made the column ragged.
+    <div className="app-container flex flex-col gap-6 py-8">
+      <header className="text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+          Daily Game Scores
+        </h1>
+        <p className="mt-2 text-base text-muted-foreground">
+          Post today&apos;s results and see how your friends did.
+        </p>
+      </header>
+
       <AvailableGamesList
         playedGames={playedGameTypes}
         lastWeekStats={{

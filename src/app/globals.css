@@ -1,66 +1,186 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light: a faintly cool page behind pure-white cards, so a card reads as a
+       raised surface rather than as the page itself. */
+    --background: 225 30% 97%;
+    --foreground: 224 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
+    --popover-foreground: 224 47% 11%;
+
+    /* Brand. Previously this was near-black, which is why every "primary"
+       control read as a plain dark rectangle. */
+    --primary: 250 74% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 25% 94%;
+    --secondary-foreground: 224 47% 11%;
+    --muted: 225 25% 94%;
+    --muted-foreground: 222 12% 45%;
+    --accent: 250 90% 96%;
+    --accent-foreground: 250 60% 35%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 36%;
+    --border: 225 18% 89%;
+    --input: 225 18% 89%;
+    --ring: 250 74% 59%;
+    --chart-1: 250 74% 59%;
     --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --chart-3: 197 37% 44%;
+    --chart-4: 43 74% 56%;
+    --chart-5: 27 87% 60%;
+    --radius: 0.75rem;
   }
+
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark: card is deliberately lighter than background. These two used to be
+       the same value, so cards had no edge and the whole page read as one flat
+       sheet. */
+    --background: 226 43% 7%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 225 30% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 225 30% 13%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+
+    --primary: 252 92% 72%;
+    --primary-foreground: 226 45% 9%;
+
+    --secondary: 225 24% 18%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
+    --muted: 225 24% 18%;
+    --muted-foreground: 217 16% 68%;
+    --accent: 250 40% 22%;
+    --accent-foreground: 250 90% 88%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 226 45% 9%;
+    --success: 152 55% 52%;
+    --border: 225 22% 22%;
+    --input: 225 22% 22%;
+    --ring: 252 92% 72%;
+    --chart-1: 252 92% 72%;
     --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-3: 197 45% 60%;
+    --chart-4: 43 80% 65%;
+    --chart-5: 27 87% 67%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;
   }
+
+  /*
+   * The page colour lives on <html>, not <body>, so it paints as the canvas.
+   * With it on <body>, body's own background box sits above the negative
+   * z-index backdrop layers and hides them.
+   */
+  html {
+    @apply bg-background;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  /*
+   * Page backdrop, in two fixed layers behind everything.
+   *
+   * The old backdrop was a 3D-cube tile at `bg-cover`, which blew a small
+   * graphic up to viewport size and put hard-edged shapes directly behind the
+   * text. These are deliberately near-invisible: texture, not decoration.
+   *
+   * Three interchangeable motifs. Swap which one `layout.tsx` applies:
+   *
+   *   .app-pattern--tiles  scattered puzzle tiles (default; echoes the score grids)
+   *   .app-pattern--dots   fine dot grid (quietest)
+   *   .app-pattern--grid   faint graph paper
+   *
+   * All three derive their colour from --foreground, so they invert with the
+   * theme automatically and need no light/dark variants.
+   */
+  .app-pattern--tiles {
+    background-color: hsl(var(--foreground) / 0.09);
+    -webkit-mask-image: url("/tile-pattern.svg");
+    mask-image: url("/tile-pattern.svg");
+    -webkit-mask-size: 170px 170px;
+    mask-size: 170px 170px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  .dark .app-pattern--tiles {
+    background-color: hsl(var(--foreground) / 0.07);
+  }
+
+  .app-pattern--dots {
+    background-image: radial-gradient(
+      hsl(var(--foreground) / 0.16) 1px,
+      transparent 1.5px
+    );
+    background-size: 22px 22px;
+  }
+
+  .dark .app-pattern--dots {
+    background-image: radial-gradient(
+      hsl(var(--foreground) / 0.13) 1px,
+      transparent 1.5px
+    );
+  }
+
+  .app-pattern--grid {
+    background-image: linear-gradient(
+        hsl(var(--foreground) / 0.07) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .app-glow {
+    background-image: radial-gradient(
+        44rem 30rem at 50% -14%,
+        hsl(var(--primary) / 0.16),
+        transparent 62%
+      ),
+      radial-gradient(
+        34rem 26rem at 102% 4%,
+        hsl(var(--primary) / 0.09),
+        transparent 60%
+      );
+  }
+
+  .dark .app-glow {
+    background-image: radial-gradient(
+        46rem 32rem at 50% -14%,
+        hsl(var(--primary) / 0.22),
+        transparent 64%
+      ),
+      radial-gradient(
+        34rem 26rem at 102% 4%,
+        hsl(var(--primary) / 0.13),
+        transparent 60%
+      );
+  }
+
+  /* Consistent column for every stacked page section. */
+  .app-container {
+    @apply mx-auto w-full max-w-2xl px-4;
+  }
+
+  /* Card surface used across the app. */
+  .surface {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
   }
 }

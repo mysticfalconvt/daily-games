@@ -93,14 +93,12 @@ export const ScoreCardList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="animate-pulse">
-          <div className="mb-4 h-8 w-1/4 rounded bg-gray-200"></div>
-          <div className="space-y-4">
-            <div className="h-32 rounded bg-gray-200"></div>
-            <div className="h-32 rounded bg-gray-200"></div>
-          </div>
-        </div>
+      // Skeleton now uses theme tokens. It was a hard-coded light grey, which
+      // glowed against the dark theme.
+      <div className="flex animate-pulse flex-col gap-4">
+        <div className="h-6 w-32 rounded bg-muted" />
+        <div className="h-40 rounded-xl bg-muted" />
+        <div className="h-40 rounded-xl bg-muted" />
       </div>
     );
   }
@@ -127,12 +125,17 @@ export const ScoreCardList = () => {
   const today = new Date().toLocaleDateString();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
       {sortedDates.map((date) => (
         <div key={date} className="flex flex-col gap-4">
-          <h1 className="text-shadow-black/80 inline-block rounded-lg bg-accent/40 px-4 py-1 text-3xl font-bold text-shadow-lg">
-            {date === today ? "Today" : date}
-          </h1>
+          {/* A ruled section header. This was a translucent bar that ran past
+              the cards and read as a rendering glitch. */}
+          <div className="flex items-center gap-3">
+            <h2 className="whitespace-nowrap text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {date === today ? "Today" : date}
+            </h2>
+            <span className="h-px flex-1 bg-border" />
+          </div>
           {Object.values(GameType)
             .sort((a, b) => {
               // Get the user's most recent score for each game type
@@ -182,39 +185,43 @@ export const ScoreCardList = () => {
               });
 
               return (
-                <Card
-                  key={gameType}
-                  className="max-w-sm break-words p-4 xl:max-w-lg"
-                >
-                  <h2 className="mb-4 text-2xl font-bold">
+                // Full container width, so every card lines up. These were
+                // max-w-sm while their neighbours were wider.
+                <Card key={gameType} className="w-full break-words">
+                  <h3 className="border-b px-5 py-3 text-base font-semibold">
                     {getPrettyGameType(gameType)}
-                  </h2>
-                  <div className="flex flex-col gap-4">
+                  </h3>
+                  <div className="flex flex-col divide-y">
                     {sortedScores.map((score) => (
                       <div
                         key={score.id}
-                        className={`flex flex-col gap-2 border-t pt-2 ${
+                        className={`flex flex-col gap-2 px-5 py-4 ${
                           score.user.id === session.user.id
-                            ? "rounded-lg bg-accent/40 p-2"
+                            ? "bg-primary/[0.06]"
                             : ""
                         }`}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <Avatar
-                            className="h-8 w-8 transition-transform"
+                            className="h-7 w-7 shrink-0"
                             showFallback={!score.user?.image}
                             src={score.user?.image || ""}
                             fallback={score.user?.name}
                           />
-                          <h2 className="text-xl font-bold">
+                          <h4 className="flex-1 truncate text-sm font-semibold">
                             {score.user.name}
-                          </h2>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/40 text-lg font-bold">
+                            {score.user.id === session.user.id && (
+                              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                you
+                              </span>
+                            )}
+                          </h4>
+                          <div className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
                             {score.rating}
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <p className="whitespace-pre-wrap text-lg">
+                          <p className="whitespace-pre-wrap text-base leading-relaxed">
                             {(() => {
                               const prettyScore = getPrettyScore(
                                 gameType as GameType,
@@ -244,7 +251,8 @@ export const ScoreCardList = () => {
                             })()}
                           </p>
                           {score.message && (
-                            <p className="text-lg text-gray-600">
+                            // Was a fixed mid-grey, near-invisible in dark mode.
+                            <p className="text-sm text-muted-foreground">
                               {score.message}
                             </p>
                           )}

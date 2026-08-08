@@ -53,7 +53,7 @@ export function FriendsList({ friends, onUpdate }: FriendsListProps) {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">My Friends</h3>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           No friends yet. Send some friend requests to get started!
         </p>
       </div>
@@ -78,7 +78,7 @@ export function FriendsList({ friends, onUpdate }: FriendsListProps) {
               />
               <div>
                 <p className="font-medium">{friend.name || friend.email}</p>
-                <p className="text-sm text-gray-500">{friend.email}</p>
+                <p className="text-sm text-muted-foreground">{friend.email}</p>
               </div>
             </div>
 

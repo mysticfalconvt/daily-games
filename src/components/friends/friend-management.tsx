@@ -101,10 +101,10 @@ export function FriendManagement() {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="mb-4 h-4 w-1/4 rounded bg-gray-200"></div>
+          <div className="mb-4 h-4 w-1/4 rounded bg-muted"></div>
           <div className="space-y-2">
-            <div className="h-3 rounded bg-gray-200"></div>
-            <div className="h-3 w-5/6 rounded bg-gray-200"></div>
+            <div className="h-3 rounded bg-muted"></div>
+            <div className="h-3 w-5/6 rounded bg-muted"></div>
           </div>
         </div>
       </div>

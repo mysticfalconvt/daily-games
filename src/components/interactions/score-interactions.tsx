@@ -198,7 +198,7 @@ export const ScoreInteractions = ({
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <Divider className="bg-gray-200 dark:bg-gray-700" />
+      <Divider className="bg-border" />
 
       {/* Error Display */}
       {error && (
@@ -253,10 +253,10 @@ export const ScoreInteractions = ({
               .map(([emojiType, reactionData]) => (
                 <div
                   key={emojiType}
-                  className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-sm dark:bg-gray-800"
+                  className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-sm"
                 >
                   <span>{emojiType}</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {reactionData.count}
                   </span>
                 </div>
@@ -266,13 +266,13 @@ export const ScoreInteractions = ({
           {/* Read-only Comments Display */}
           {interactions.comments.length > 0 && (
             <div className="flex flex-col gap-3 opacity-60">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h4 className="text-sm font-semibold text-muted-foreground">
                 Comments ({interactions.comments.length})
               </h4>
               {interactions.comments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="flex gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50"
+                  className="flex gap-3 rounded-lg border border-border bg-muted/40 p-3"
                 >
                   <Avatar
                     src={comment.user.image}
@@ -282,14 +282,14 @@ export const ScoreInteractions = ({
                   />
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm font-medium text-foreground">
                         {comment.user.name || "Anonymous"}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">
+                    <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
                       {comment.content}
                     </p>
                   </div>

@@ -26,9 +26,13 @@ export default function AuthButton({ minimal = true }: { minimal?: boolean }) {
       });
     if (minimal) {
       return (
-        <Button onClick={signOutClick} color="danger" variant="ghost">
-          <IconBrandGoogle />
-          Sign Out
+        <Button
+          onClick={signOutClick}
+          color="danger"
+          variant="flat"
+          className="font-medium"
+        >
+          Sign out
         </Button>
       );
     }
@@ -59,17 +63,21 @@ export default function AuthButton({ minimal = true }: { minimal?: boolean }) {
   }
 
   return (
+    // Solid, not `variant="ghost"`. Ghost renders transparent with coloured
+    // text, which sat on top of the patterned page background and was
+    // effectively unreadable in light mode.
     <Button
       onClick={() =>
         signIn("google", {
           callbackUrl: "/",
         })
       }
-      color="danger"
-      variant="ghost"
+      color="primary"
+      variant="solid"
+      className="font-medium"
+      startContent={<IconBrandGoogle size={18} />}
     >
-      <IconBrandGoogle />
-      Sign In
+      Sign in
     </Button>
   );
 }

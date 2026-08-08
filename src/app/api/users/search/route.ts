@@ -1,50 +1,19 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
-import db from "@/db";
-import { ilike } from "drizzle-orm";
+import { noStore, requireApiUser, withApi } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { UserSearchService } from "@/services/user-search-service";
 
-export async function GET(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.email) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const GET = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiUser();
+  enforceRateLimit("userSearch", user.id);
 
-        const { searchParams } = new URL(request.url);
-        const query = searchParams.get("q");
+  const query = new URL(request.url).searchParams.get("q") ?? "";
+  const users = await UserSearchService.search(user.id, query);
 
-        if (!query || query.length < 2) {
-            return NextResponse.json({ users: [] }, { status: 200 });
-        }
-
-        // Search for users by email, excluding the current user
-        const searchResults = await db.query.users.findMany({
-            where: (fields, { and, not, eq }) => and(
-                ilike(fields.email, `%${query}%`),
-                not(eq(fields.email, session.user.email!))
-            ),
-            columns: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-            },
-            limit: 10,
-        });
-
-        return NextResponse.json({ users: searchResults }, { status: 200 });
-    } catch (error) {
-        console.error("Error searching users:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json({ users }, { status: 200, headers: noStore });
+});

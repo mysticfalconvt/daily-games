@@ -1,24 +1,23 @@
 import { Card, CardBody, User } from "@nextui-org/react";
-import { getServerSession } from "next-auth";
 
 import { FriendManagement } from "@/components/friends/friend-management";
-import options from "@/config/auth";
-import requireAuth from "@/utils/require-auth";
+import { requireUser } from "@/lib/auth-context";
 
 export default async function Profile() {
-  await requireAuth();
-  const session = (await getServerSession(options))!;
+  // While impersonating this is the impersonated user, which is the point -
+  // the admin sees the profile page as they see it.
+  const { user } = await requireUser();
 
   return (
     <div className="mx-auto mt-4 max-w-2xl space-y-6">
       <Card>
         <CardBody>
           <User
-            name={session.user?.name}
-            description={session.user?.email}
+            name={user.name}
+            description={user.email}
             avatarProps={{
-              showFallback: !session.user?.image,
-              src: session.user?.image || "",
+              showFallback: !user.image,
+              src: user.image || "",
             }}
           />
         </CardBody>

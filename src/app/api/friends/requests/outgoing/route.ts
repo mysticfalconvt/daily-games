@@ -1,29 +1,15 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { noStore, requireApiUser, withApi } from "@/lib/api";
 import { FriendService } from "@/services/friend-service";
 
-export async function GET() {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const GET = withApi(async () => {
+  const { user } = await requireApiUser();
+  const requests = await FriendService.getOutgoingRequests(user.id);
 
-        const requests = await FriendService.getOutgoingRequests(session.user.id);
-
-        return NextResponse.json({ requests }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching outgoing requests:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json({ requests }, { status: 200, headers: noStore });
+});

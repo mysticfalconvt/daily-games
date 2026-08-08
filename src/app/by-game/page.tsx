@@ -1,14 +1,11 @@
 import { Card, CardBody } from "@nextui-org/react";
-import { getServerSession } from "next-auth";
 
 import { ByGameScoreList } from "@/components/by-game-score-list";
-import options from "@/config/auth";
+import { requireUser } from "@/lib/auth-context";
 
 export default async function Home() {
-  const session = (await getServerSession(options))!;
-  if (!session?.user) {
-    return null;
-  }
+  await requireUser();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-start gap-2">
       <Card className="mx-auto mt-4 max-w-md">

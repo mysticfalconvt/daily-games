@@ -11,13 +11,15 @@ import { Card } from "./ui/card";
 
 export const ByGameScoreList = () => {
   const { data: session } = useSession();
-  const [listOfScores, setListOfScores] = useState<Array<{
-    id: string;
-    gameType: string;
-    rating: string;
-    user?: { id: string; name?: string; image?: string };
-  }>>([]);
-  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [listOfScores, setListOfScores] = useState<
+    Array<{
+      id: string;
+      gameType: string;
+      rating: string;
+      user?: { id: string; name?: string; image?: string };
+    }>
+  >([]);
+  const [friendsOnly, setFriendsOnly] = useState(false);
   const [hasFriends, setHasFriends] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,7 +28,9 @@ export const ByGameScoreList = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}&t=${Date.now()}`);
+      const response = await fetch(
+        `/api/scores/weekly?friendsOnly=${friendsOnly}&t=${Date.now()}`
+      );
       if (response.ok) {
         const data = await response.json();
         setListOfScores(data.scores);
@@ -39,7 +43,7 @@ export const ByGameScoreList = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, showAllUsers]);
+  }, [session?.user?.id, friendsOnly]);
 
   useEffect(() => {
     fetchScores();
@@ -72,8 +76,8 @@ export const ByGameScoreList = () => {
     return (
       <div className="flex flex-col gap-1">
         <div className="animate-pulse space-y-4">
-          <div className="h-24 bg-gray-200 rounded"></div>
-          <div className="h-24 bg-gray-200 rounded"></div>
+          <div className="h-24 rounded bg-gray-200"></div>
+          <div className="h-24 rounded bg-gray-200"></div>
         </div>
       </div>
     );
@@ -109,7 +113,6 @@ export const ByGameScoreList = () => {
       };
     }
   );
-  console.log(listOfScoresByGameType);
 
   return (
     <div className="flex flex-col gap-1">
@@ -154,8 +157,8 @@ export const ByGameScoreList = () => {
         );
       })}
       <ViewToggle
-        showAllUsers={showAllUsers}
-        onToggle={setShowAllUsers}
+        friendsOnly={friendsOnly}
+        onToggle={setFriendsOnly}
         hasFriends={hasFriends}
       />
     </div>

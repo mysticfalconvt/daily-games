@@ -4,20 +4,18 @@ import { revalidatePath } from "next/cache";
 
 import { parseWithZod } from "@conform-to/zod";
 import { and, eq, gte } from "drizzle-orm";
-import { getServerSession } from "next-auth";
 
-import options from "@/config/auth";
 import db from "@/db";
 import gameScoreEntries, {
   InsertGameScoreEntrySchema,
 } from "@/db/schema/game-score-entries";
-import requireAuth from "@/utils/require-auth";
+import { requireUser } from "@/lib/auth-context";
 
 export async function createGameScoreEntry(
   prevState: unknown,
   formData: FormData
 ) {
-  await requireAuth();
+  const { user, impersonation } = await requireUser();
 
   const submission = parseWithZod(formData, {
     schema: InsertGameScoreEntrySchema,
@@ -26,7 +24,15 @@ export async function createGameScoreEntry(
     return submission.reply();
   }
 
-  const session = (await getServerSession(options))!;
+  // Impersonation is read-only, so an admin cannot leave a real score behind
+  // under someone else's name.
+  if (impersonation) {
+    return submission.reply({
+      formErrors: [
+        "Impersonation is read-only. Stop impersonating to submit a score.",
+      ],
+    });
+  }
 
   // Check for duplicate scores for the same game today
   const today = new Date();
@@ -34,7 +40,7 @@ export async function createGameScoreEntry(
 
   const existingScore = await db.query.gameScoreEntries.findFirst({
     where: and(
-      eq(gameScoreEntries.userId, session.user.id),
+      eq(gameScoreEntries.userId, user.id),
       eq(gameScoreEntries.gameType, submission.value.gameType),
       gte(gameScoreEntries.createdAt, today)
     ),
@@ -49,7 +55,7 @@ export async function createGameScoreEntry(
   }
 
   await db.insert(gameScoreEntries).values({
-    userId: session.user.id,
+    userId: user.id,
     message: submission.value.message,
     gameType: submission.value.gameType,
     score: submission.value.score,

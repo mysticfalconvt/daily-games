@@ -1,11 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Button, Textarea } from "@nextui-org/react";
-import { useRouter } from "next/navigation";
 import { useFormState } from "react-dom";
 
 import { createGameScoreEntry } from "@/app/actions";
@@ -25,7 +25,7 @@ export default function AddGameScoreForm() {
   const [gameRating, setGameRating] = React.useState(0);
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
-  
+
   // Trigger router refresh when form is successfully submitted
   React.useEffect(() => {
     if (lastResult?.status === "success") {

@@ -20,7 +20,7 @@ import { ThemeSwitcher } from "./theme-switcher";
 
 export default function AppNavbar() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   const menuItems = [
     {
@@ -38,6 +38,15 @@ export default function AppNavbar() {
       label: "by game scores",
       href: "/by-game",
     });
+
+    // Hidden while impersonating - the admin area is closed in that state, so
+    // linking to it would only ever bounce back to the home page.
+    if (session?.user.role === "admin" && !session.impersonation) {
+      menuItems.push({
+        label: "Admin",
+        href: "/admin",
+      });
+    }
   }
 
   return (

@@ -1,19 +1,37 @@
 import { Card, CardBody } from "@nextui-org/react";
-import { and, gte, lt } from "drizzle-orm";
-import { getServerSession } from "next-auth";
+import { and, gte, inArray, lt } from "drizzle-orm";
 
 import AddGameScoreForm from "@/components/add-game-score-form";
 import AvailableGamesList from "@/components/available-games-list";
 import { ScoreCardList } from "@/components/score-card-list";
-import options from "@/config/auth";
 import db from "@/db";
 import gameScoreEntries from "@/db/schema/game-score-entries";
+import { getAuthContext } from "@/lib/auth-context";
+import { VisibilityService } from "@/services/visibility-service";
 
 export default async function Home() {
-  const session = (await getServerSession(options))!;
-  if (!session?.user) {
-    return null;
+  // This page is the sign-in destination, so it must handle anonymous visitors
+  // itself. `requireUser()` redirects here, which on this route is a redirect
+  // loop.
+  const context = await getAuthContext();
+
+  if (!context) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-start gap-2">
+        <Card className="mx-auto mt-4 max-w-md">
+          <CardBody className="text-center">
+            <h1 className="text-5xl">Daily Game Scores</h1>
+            <p className="text-xl">A place to share your scores</p>
+            <p className="mt-2 text-sm text-default-500">
+              Sign in to post your scores and see your friends&apos;.
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+    );
   }
+
+  const { user } = context;
 
   // Get today's date at midnight for comparison
   const today = new Date();
@@ -23,10 +41,19 @@ export default async function Home() {
   const lastWeek = new Date(today);
   lastWeek.setDate(lastWeek.getDate() - 7);
 
-  // Fetch all games played today and in the last week
+  // Wins are decided against the scores this user is actually allowed to see.
+  // This used to query every score in the table, so a private stranger's result
+  // could silently cost you a win you had no way to look up.
+  const visibleUserIds = await VisibilityService.getVisibleScoreOwnerIds(
+    user.id
+  );
+
   const [allGamesToday, allGamesLastWeek] = await Promise.all([
     db.query.gameScoreEntries.findMany({
-      where: gte(gameScoreEntries.createdAt, today),
+      where: and(
+        gte(gameScoreEntries.createdAt, today),
+        inArray(gameScoreEntries.userId, visibleUserIds)
+      ),
       columns: {
         gameType: true,
         rating: true,
@@ -36,7 +63,8 @@ export default async function Home() {
     db.query.gameScoreEntries.findMany({
       where: and(
         gte(gameScoreEntries.createdAt, lastWeek),
-        lt(gameScoreEntries.createdAt, today)
+        lt(gameScoreEntries.createdAt, today),
+        inArray(gameScoreEntries.userId, visibleUserIds)
       ),
       columns: {
         gameType: true,
@@ -116,25 +144,25 @@ export default async function Home() {
 
   // Get the current user's played games and their win status for today
   const userPlayedGames = allGamesToday
-    .filter((game) => game.userId === session.user.id)
+    .filter((game) => game.userId === user.id)
     .map((game) => ({
       gameType: game.gameType,
       rating: Number(game.rating),
       isWin:
         todayWinsByGame[game.gameType]?.some(
-          (winner) => winner.userId === session.user.id
+          (winner) => winner.userId === user.id
         ) ?? false,
     }));
 
   // Get the current user's played games and their win status for last week
   const userPlayedGamesLastWeek = allGamesLastWeek
-    .filter((game) => game.userId === session.user.id)
+    .filter((game) => game.userId === user.id)
     .map((game) => ({
       gameType: game.gameType,
       rating: Number(game.rating),
       isWin:
         lastWeekWinsByGame[game.gameType]?.some(
-          (winner) => winner.userId === session.user.id
+          (winner) => winner.userId === user.id
         ) ?? false,
     }));
 

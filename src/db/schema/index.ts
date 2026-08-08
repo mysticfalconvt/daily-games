@@ -1,24 +1,33 @@
 export { default as accounts } from "./accounts";
 export {
-  default as friendRequests,
-  friendRequestsRelations
-} from "./friend-requests";
+  ADMIN_ACTIONS,
+  default as adminAuditLog,
+  adminAuditLogRelations,
+  type AdminAction,
+} from "./admin-audit-log";
 export {
-  default as friendships,
-  friendshipsRelations
-} from "./friendships";
+  default as friendRequests,
+  friendRequestsRelations,
+} from "./friend-requests";
+export { default as friendships, friendshipsRelations } from "./friendships";
 export {
   default as gameScoreEntries,
-  gameScoreEntriesRelations
+  gameScoreEntriesRelations,
 } from "./game-score-entries";
+export { default as loginEvents, loginEventsRelations } from "./login-events";
 export {
   default as scoreComments,
-  scoreCommentsRelations
+  scoreCommentsRelations,
 } from "./score-comments";
 export {
   default as scoreReactions,
-  scoreReactionsRelations
+  scoreReactionsRelations,
 } from "./score-reactions";
 export { default as sessions } from "./sessions";
-export { default as users, usersRelations } from "./users";
-
+export {
+  PUBLIC_USER_COLUMNS,
+  USER_ROLES,
+  default as users,
+  usersRelations,
+  type UserRole,
+} from "./users";

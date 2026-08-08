@@ -1,66 +1,41 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { badRequest, requireApiWrite, withApi } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { FriendService } from "@/services/friend-service";
 
-export async function POST(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.email) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        const body = await request.json();
-        const { email } = body;
+export const POST = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiWrite();
+  // "User not found" tells the caller whether an address is registered. That
+  // is unavoidable - it is how you add someone private - so the control is the
+  // rate limit rather than a vaguer error.
+  enforceRateLimit("friendRequest", user.id);
 
-        if (!email || typeof email !== "string") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Email is required" },
-                { status: 400 }
-            );
-        }
+  const body = await request.json();
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Invalid email format" },
-                { status: 400 }
-            );
-        }
+  // The search box sends a resolved id so it never has to expose an email.
+  if (typeof body?.userId === "string" && body.userId) {
+    await FriendService.sendFriendRequest(user.id, body.userId);
+    return NextResponse.json(
+      { message: "Friend request sent successfully" },
+      { status: 200 }
+    );
+  }
 
-        await FriendService.sendFriendRequest(session.user.email, email);
+  if (typeof body?.email !== "string" || !EMAIL_PATTERN.test(body.email)) {
+    throw badRequest("A valid email address is required");
+  }
 
-        return NextResponse.json(
-            { message: "Friend request sent successfully" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error sending friend request:", error);
+  await FriendService.sendFriendRequestByEmail(user.id, body.email);
 
-        if (error instanceof Error) {
-            // Handle specific error messages from the service
-            const statusCode =
-                error.message === "User not found" ? 404 :
-                    error.message === "Cannot add yourself as a friend" ? 400 :
-                        error.message === "Already friends with this user" ? 409 :
-                            error.message === "Friend request already sent" ? 409 :
-                                500;
-
-            return NextResponse.json(
-                { error: "Request Failed", message: error.message },
-                { status: statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json(
+    { message: "Friend request sent successfully" },
+    { status: 200 }
+  );
+});

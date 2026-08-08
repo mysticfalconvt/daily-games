@@ -14,6 +14,10 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     UMAMI_ID: z.string().optional(),
+    // Comma-separated emails that are granted the admin role on sign-in. This
+    // is the bootstrap path: prod already has users, so there is no
+    // "first user wins" moment left to hook into.
+    ADMIN_EMAILS: z.string().default("rboskind@gmail.com"),
     // Build-time only: uploading source maps to Bugsink is skipped unless
     // SENTRY_AUTH_TOKEN is set. See next.config.mjs.
     SENTRY_URL: z.string().url().optional(),

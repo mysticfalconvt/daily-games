@@ -1,40 +1,28 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { noStore, requireApiUser, withApi } from "@/lib/api";
 import { ScoreFilterService } from "@/services/score-filter-service";
+import { VisibilityService } from "@/services/visibility-service";
 
-export async function GET(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const GET = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiUser();
 
-        const { searchParams } = new URL(request.url);
-        const showAllUsers = searchParams.get("showAllUsers") === "true";
+  // A display preference only - it can narrow the feed to friends, never widen
+  // it past what VisibilityService allows.
+  const friendsOnly =
+    new URL(request.url).searchParams.get("friendsOnly") === "true";
 
-        const scores = await ScoreFilterService.getWeeklyFilteredScores(session.user.id, showAllUsers);
-        const hasFriends = !(await ScoreFilterService.shouldShowAllUsers(session.user.id));
+  const [scores, hasFriends] = await Promise.all([
+    ScoreFilterService.getWeeklyFilteredScores(user.id, friendsOnly),
+    VisibilityService.hasFriends(user.id),
+  ]);
 
-        return NextResponse.json({ scores, hasFriends }, { 
-            status: 200,
-            headers: {
-                "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-                Pragma: "no-cache",
-                Expires: "0",
-            },
-        });
-    } catch (error) {
-        console.error("Error fetching weekly scores:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json(
+    { scores, hasFriends },
+    { status: 200, headers: noStore }
+  );
+});

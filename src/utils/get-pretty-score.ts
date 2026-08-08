@@ -33,7 +33,11 @@ export const getPrettyScore = (gameType: GameType, score: string): string => {
       const whereTakenLines = score.split("\n");
       const whereTakenBoxesLines = whereTakenLines.filter(
         (line) =>
-          line.includes("🟦") || line.includes("🟥") || line.includes("⬜") || line.includes("🎉") || line.includes("➡️")
+          line.includes("🟦") ||
+          line.includes("🟥") ||
+          line.includes("⬜") ||
+          line.includes("🎉") ||
+          line.includes("➡️")
       );
       const starsLine = whereTakenLines.find((line) => line.includes("⭐"));
       if (whereTakenBoxesLines.length > 0 && starsLine) {
@@ -129,7 +133,7 @@ export const getPrettyScore = (gameType: GameType, score: string): string => {
       // Extract time and colored circle from "Pips #3 Hard 🔴\n3:40"
       const timeMatch = score.match(/\d+:\d+/);
       const circleMatch = score.match(/(🔴|🟠|🟡|🟢|🔵|🟣|⚫|⚪|🟤)/);
-      
+
       if (timeMatch && circleMatch) {
         return `${timeMatch[0]} ${circleMatch[0]}`;
       }

@@ -1,52 +1,24 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { badRequest, requireApiWrite, withApi } from "@/lib/api";
 import { FriendService } from "@/services/friend-service";
 
-export async function POST(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const POST = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiWrite();
 
-        const body = await request.json();
-        const { requestId } = body;
+  const body = await request.json();
+  if (typeof body?.requestId !== "string" || !body.requestId) {
+    throw badRequest("Request ID is required");
+  }
 
-        if (!requestId || typeof requestId !== "string") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Request ID is required" },
-                { status: 400 }
-            );
-        }
+  await FriendService.acceptFriendRequest(body.requestId, user.id);
 
-        await FriendService.acceptFriendRequest(requestId, session.user.id);
-
-        return NextResponse.json(
-            { message: "Friend request accepted successfully" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error accepting friend request:", error);
-
-        if (error instanceof Error) {
-            const statusCode =
-                error.message === "Friend request not found or not authorized" ? 404 : 500;
-
-            return NextResponse.json(
-                { error: "Request Failed", message: error.message },
-                { status: statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json(
+    { message: "Friend request accepted successfully" },
+    { status: 200 }
+  );
+});

@@ -1,7 +1,10 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarLayout, SidebarTrigger } from "@/components/ui/sidebar";
+import { requireUser } from "@/lib/auth-context";
 
 export default async function Page() {
+  await requireUser();
+
   const { cookies } = await import("next/headers");
   return (
     <SidebarLayout

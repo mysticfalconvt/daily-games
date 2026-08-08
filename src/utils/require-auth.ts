@@ -1,12 +1,9 @@
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth-context";
 
-import { getServerSession } from "next-auth";
-
-import options from "@/config/auth";
-
+/**
+ * @deprecated Use `requireUser` from `@/lib/auth-context`, which returns the
+ * caller instead of only asserting that one exists.
+ */
 export default async function requireAuth() {
-  const session = await getServerSession(options);
-  if (!session?.user) {
-    redirect("/");
-  }
+  await requireUser();
 }

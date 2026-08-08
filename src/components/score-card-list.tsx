@@ -21,11 +21,10 @@ type ScoreEntry = {
   rating: string;
   score: string;
   message: string | null;
+  // The feed no longer ships author emails - see PUBLIC_USER_COLUMNS.
   user: {
     id: string;
     name: string | null;
-    email: string;
-    emailVerified: Date | null;
     image: string;
   };
 };
@@ -39,7 +38,7 @@ type GroupedScores = {
 export const ScoreCardList = () => {
   const { data: session } = useSession();
   const [listOfScores, setListOfScores] = useState<ScoreEntry[]>([]);
-  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [friendsOnly, setFriendsOnly] = useState(false);
   const [hasFriends, setHasFriends] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,7 +47,9 @@ export const ScoreCardList = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/scores/weekly?showAllUsers=${showAllUsers}&t=${Date.now()}`);
+      const response = await fetch(
+        `/api/scores/weekly?friendsOnly=${friendsOnly}&t=${Date.now()}`
+      );
       if (response.ok) {
         const data = await response.json();
         setListOfScores(data.scores as ScoreEntry[]);
@@ -61,7 +62,7 @@ export const ScoreCardList = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, showAllUsers]);
+  }, [session?.user?.id, friendsOnly]);
 
   useEffect(() => {
     fetchScores();
@@ -94,10 +95,10 @@ export const ScoreCardList = () => {
     return (
       <div className="flex flex-col gap-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="mb-4 h-8 w-1/4 rounded bg-gray-200"></div>
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 rounded bg-gray-200"></div>
+            <div className="h-32 rounded bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -192,10 +193,11 @@ export const ScoreCardList = () => {
                     {sortedScores.map((score) => (
                       <div
                         key={score.id}
-                        className={`flex flex-col gap-2 border-t pt-2 ${score.user.id === session.user.id
-                          ? "rounded-lg bg-accent/40 p-2"
-                          : ""
-                          }`}
+                        className={`flex flex-col gap-2 border-t pt-2 ${
+                          score.user.id === session.user.id
+                            ? "rounded-lg bg-accent/40 p-2"
+                            : ""
+                        }`}
                       >
                         <div className="flex items-center gap-2">
                           <Avatar
@@ -252,6 +254,7 @@ export const ScoreCardList = () => {
                         <ScoreInteractions
                           scoreId={score.id}
                           currentUserId={session.user.id}
+                          scoreOwnerId={score.userId}
                         />
                       </div>
                     ))}
@@ -262,8 +265,8 @@ export const ScoreCardList = () => {
         </div>
       ))}
       <ViewToggle
-        showAllUsers={showAllUsers}
-        onToggle={setShowAllUsers}
+        friendsOnly={friendsOnly}
+        onToggle={setFriendsOnly}
         hasFriends={hasFriends}
       />
     </div>

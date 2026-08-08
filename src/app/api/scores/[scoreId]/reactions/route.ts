@@ -1,100 +1,58 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import {
+  badRequest,
+  noStore,
+  requireApiUser,
+  requireApiWrite,
+  withApi,
+} from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { ScoreInteractionService } from "@/services/score-interaction-service";
+import { VisibilityService } from "@/services/visibility-service";
 import { EmojiType, ToggleReactionRequest } from "@/types/interactions";
+
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
 const VALID_EMOJIS: EmojiType[] = ["👍", "🔥", "😮", "😂", "❤️", "🎉"];
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: { scoreId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+export const POST = withApi(
+  async (request: NextRequest, { params }: { params: { scoreId: string } }) => {
+    const { user } = await requireApiWrite();
+    enforceRateLimit("reaction", user.id);
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+    const body = (await request.json()) as ToggleReactionRequest;
 
-        const body = await request.json() as ToggleReactionRequest;
-        const { emojiType } = body;
-
-        if (!emojiType || typeof emojiType !== "string") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Emoji type is required" },
-                { status: 400 }
-            );
-        }
-
-        if (!VALID_EMOJIS.includes(emojiType as EmojiType)) {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Invalid emoji type" },
-                { status: 400 }
-            );
-        }
-
-        await ScoreInteractionService.toggleReaction(
-            session.user.id,
-            params.scoreId,
-            emojiType as EmojiType
-        );
-
-        return NextResponse.json(
-            { message: "Reaction toggled successfully" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error toggling reaction:", error);
-
-        if (error instanceof Error) {
-            const statusCode =
-                error.message === "You do not have permission to react to this score" ? 403 :
-                    500;
-
-            return NextResponse.json(
-                { error: "Request Failed", message: error.message },
-                { status: statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
+    if (!VALID_EMOJIS.includes(body?.emojiType)) {
+      throw badRequest("Invalid emoji type");
     }
-}
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { scoreId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+    await ScoreInteractionService.toggleReaction(
+      user.id,
+      params.scoreId,
+      body.emojiType
+    );
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+    return NextResponse.json(
+      { message: "Reaction toggled successfully" },
+      { status: 200 }
+    );
+  }
+);
 
-        const reactionSummary = await ScoreInteractionService.getReactionSummary(
-            params.scoreId,
-            session.user.id
-        );
+export const GET = withApi(
+  async (request: NextRequest, { params }: { params: { scoreId: string } }) => {
+    const { user } = await requireApiUser();
 
-        return NextResponse.json({ reactions: reactionSummary }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching reactions:", error);
+    await VisibilityService.requireViewableScore(user.id, params.scoreId);
 
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+    const reactions = await ScoreInteractionService.getReactionSummary(
+      params.scoreId,
+      user.id
+    );
+
+    return NextResponse.json({ reactions }, { status: 200, headers: noStore });
+  }
+);

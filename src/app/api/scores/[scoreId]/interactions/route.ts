@@ -1,35 +1,26 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { noStore, requireApiUser, withApi } from "@/lib/api";
 import { ScoreInteractionService } from "@/services/score-interaction-service";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { scoreId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const GET = withApi(
+  async (request: NextRequest, { params }: { params: { scoreId: string } }) => {
+    const { user } = await requireApiUser();
 
-        const interactions = await ScoreInteractionService.getInteractionsForScore(
-            params.scoreId,
-            session.user.id
-        );
+    // Throws 404 if the viewer may not see this score, and filters the
+    // comments and reactions to authors they may see.
+    const interactions = await ScoreInteractionService.getInteractionsForScore(
+      params.scoreId,
+      user.id
+    );
 
-        return NextResponse.json({ interactions }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching interactions:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+    return NextResponse.json(
+      { interactions },
+      { status: 200, headers: noStore }
+    );
+  }
+);

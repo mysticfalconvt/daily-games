@@ -1,42 +1,24 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { badRequest, requireApiWrite, withApi } from "@/lib/api";
 import { FriendService } from "@/services/friend-service";
 
-export async function DELETE(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const DELETE = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiWrite();
 
-        const body = await request.json();
-        const { friendId } = body;
+  const body = await request.json();
+  if (typeof body?.friendId !== "string" || !body.friendId) {
+    throw badRequest("Friend ID is required");
+  }
 
-        if (!friendId || typeof friendId !== "string") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Friend ID is required" },
-                { status: 400 }
-            );
-        }
+  await FriendService.removeFriend(user.id, body.friendId);
 
-        await FriendService.removeFriend(session.user.id, friendId);
-
-        return NextResponse.json(
-            { message: "Friend removed successfully" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error removing friend:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+  return NextResponse.json(
+    { message: "Friend removed successfully" },
+    { status: 200 }
+  );
+});

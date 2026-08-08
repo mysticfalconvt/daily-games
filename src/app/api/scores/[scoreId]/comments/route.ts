@@ -1,101 +1,55 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import {
+  badRequest,
+  noStore,
+  requireApiUser,
+  requireApiWrite,
+  withApi,
+} from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { ScoreInteractionService } from "@/services/score-interaction-service";
+import { VisibilityService } from "@/services/visibility-service";
 import { CreateCommentRequest } from "@/types/interactions";
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: { scoreId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+export const POST = withApi(
+  async (request: NextRequest, { params }: { params: { scoreId: string } }) => {
+    const { user } = await requireApiWrite();
+    enforceRateLimit("comment", user.id);
 
-        const body = await request.json() as CreateCommentRequest;
-        const { content } = body;
+    const body = (await request.json()) as CreateCommentRequest;
 
-        if (!content || typeof content !== "string") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Comment content is required" },
-                { status: 400 }
-            );
-        }
-
-        if (content.trim().length === 0) {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Comment content cannot be empty" },
-                { status: 400 }
-            );
-        }
-
-        if (content.length > 500) {
-            return NextResponse.json(
-                { error: "Bad Request", message: "Comment content cannot exceed 500 characters" },
-                { status: 400 }
-            );
-        }
-
-        const comment = await ScoreInteractionService.createComment(
-            session.user.id,
-            params.scoreId,
-            content
-        );
-
-        return NextResponse.json({ comment }, { status: 201 });
-    } catch (error) {
-        console.error("Error creating comment:", error);
-
-        if (error instanceof Error) {
-            const statusCode =
-                error.message === "You do not have permission to comment on this score" ? 403 :
-                    error.message === "Comment content cannot be empty" ? 400 :
-                        error.message === "Comment content cannot exceed 500 characters" ? 400 :
-                            500;
-
-            return NextResponse.json(
-                { error: "Request Failed", message: error.message },
-                { status: statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
+    if (typeof body?.content !== "string") {
+      throw badRequest("Comment content is required");
     }
-}
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { scoreId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+    const comment = await ScoreInteractionService.createComment(
+      user.id,
+      params.scoreId,
+      body.content
+    );
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+    return NextResponse.json({ comment }, { status: 201 });
+  }
+);
 
-        const comments = await ScoreInteractionService.getCommentsForScore(params.scoreId);
+export const GET = withApi(
+  async (request: NextRequest, { params }: { params: { scoreId: string } }) => {
+    const { user } = await requireApiUser();
 
-        return NextResponse.json({ comments }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching comments:", error);
+    // Was completely unauthenticated beyond "is logged in": any user could
+    // read the comments on any score id, including private users' scores.
+    await VisibilityService.requireViewableScore(user.id, params.scoreId);
 
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+    const comments = await ScoreInteractionService.getCommentsForScore(
+      params.scoreId,
+      user.id
+    );
+
+    return NextResponse.json({ comments }, { status: 200, headers: noStore });
+  }
+);

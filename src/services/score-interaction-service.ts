@@ -1,354 +1,197 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import db from "@/db";
 import {
-    friendships,
-    gameScoreEntries,
-    scoreComments,
-    scoreReactions
+  PUBLIC_USER_COLUMNS,
+  scoreComments,
+  scoreReactions,
 } from "@/db/schema";
+import { badRequest, forbidden, notFound } from "@/lib/api";
 import {
-    EmojiType,
-    ReactionSummary,
-    ScoreComment,
-    ScoreInteractions,
-    ScoreReaction
+  EmojiType,
+  ReactionSummary,
+  ScoreComment,
+  ScoreInteractions,
 } from "@/types/interactions";
 
+import { VisibilityService } from "./visibility-service";
+
+const EMPTY_REACTION_SUMMARY = (): ReactionSummary => ({
+  "👍": { count: 0, users: [], userHasReacted: false },
+  "🔥": { count: 0, users: [], userHasReacted: false },
+  "😮": { count: 0, users: [], userHasReacted: false },
+  "😂": { count: 0, users: [], userHasReacted: false },
+  "❤️": { count: 0, users: [], userHasReacted: false },
+  "🎉": { count: 0, users: [], userHasReacted: false },
+});
+
+export const MAX_COMMENT_LENGTH = 500;
+
 export class ScoreInteractionService {
-    /**
-     * Create a new comment on a score
-     */
-    static async createComment(
-        userId: string,
-        scoreId: string,
-        content: string
-    ): Promise<ScoreComment> {
-        // Validate content length
-        if (!content || content.trim().length === 0) {
-            throw new Error("Comment content cannot be empty");
-        }
+  static async createComment(
+    userId: string,
+    scoreId: string,
+    content: string
+  ): Promise<ScoreComment> {
+    const trimmed = content.trim();
 
-        if (content.length > 500) {
-            throw new Error("Comment content cannot exceed 500 characters");
-        }
-
-        // Check if user can interact with this score
-        const canInteract = await this.canUserInteractWithScore(userId, scoreId);
-        if (!canInteract) {
-            throw new Error("You do not have permission to comment on this score");
-        }
-
-        // Create the comment
-        const [newComment] = await db.insert(scoreComments).values({
-            scoreId,
-            userId,
-            content: content.trim(),
-        }).returning();
-
-        // Fetch the comment with user data
-        const commentWithUser = await db.query.scoreComments.findFirst({
-            where: eq(scoreComments.id, newComment.id),
-            with: {
-                user: {
-                    columns: {
-                        id: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-            },
-        });
-
-        if (!commentWithUser) {
-            throw new Error("Failed to create comment");
-        }
-
-        return {
-            id: commentWithUser.id,
-            scoreId: commentWithUser.scoreId,
-            userId: commentWithUser.userId,
-            content: commentWithUser.content,
-            createdAt: commentWithUser.createdAt,
-            updatedAt: commentWithUser.updatedAt,
-            user: commentWithUser.user,
-        };
+    if (!trimmed) {
+      throw badRequest("Comment content cannot be empty");
+    }
+    if (trimmed.length > MAX_COMMENT_LENGTH) {
+      throw badRequest(
+        `Comment content cannot exceed ${MAX_COMMENT_LENGTH} characters`
+      );
     }
 
-    /**
-     * Delete a comment (only by the comment author)
-     */
-    static async deleteComment(userId: string, commentId: string): Promise<void> {
-        // Find the comment and verify ownership
-        const comment = await db.query.scoreComments.findFirst({
-            where: eq(scoreComments.id, commentId),
-        });
+    await VisibilityService.requireInteractableScore(userId, scoreId);
 
-        if (!comment) {
-            throw new Error("Comment not found");
-        }
+    const [inserted] = await db
+      .insert(scoreComments)
+      .values({ scoreId, userId, content: trimmed })
+      .returning();
 
-        if (comment.userId !== userId) {
-            throw new Error("You can only delete your own comments");
-        }
+    const comment = await db.query.scoreComments.findFirst({
+      where: eq(scoreComments.id, inserted.id),
+      with: { user: { columns: PUBLIC_USER_COLUMNS } },
+    });
 
-        // Delete the comment
-        await db.delete(scoreComments).where(eq(scoreComments.id, commentId));
+    if (!comment) {
+      throw new Error("Failed to load the comment that was just created");
     }
 
-    /**
-     * Get all comments for a score
-     */
-    static async getCommentsForScore(scoreId: string): Promise<ScoreComment[]> {
-        try {
-            const comments = await db.query.scoreComments.findMany({
-                where: eq(scoreComments.scoreId, scoreId),
-                with: {
-                    user: {
-                        columns: {
-                            id: true,
-                            name: true,
-                            image: true,
-                        },
-                    },
-                },
-                orderBy: (fields, { asc }) => asc(fields.createdAt),
-            });
+    return comment;
+  }
 
-            return comments.map(comment => ({
-                id: comment.id,
-                scoreId: comment.scoreId,
-                userId: comment.userId,
-                content: comment.content,
-                createdAt: comment.createdAt,
-                updatedAt: comment.updatedAt,
-                user: comment.user,
-            }));
-        } catch (error) {
-            console.error(`Error fetching comments with relations for score ${scoreId}:`, error);
+  /**
+   * Deletes a comment. The author can always remove their own; the owner of the
+   * score can remove anything on their score, which is the only moderation
+   * lever a user has over their own feed.
+   */
+  static async deleteComment(userId: string, commentId: string): Promise<void> {
+    const comment = await db.query.scoreComments.findFirst({
+      where: eq(scoreComments.id, commentId),
+      with: { score: { columns: { userId: true } } },
+    });
 
-            // Fallback to simple query without relations
-            try {
-                console.log("Falling back to simple query without user relations");
-                const simpleComments = await db.select().from(scoreComments).where(eq(scoreComments.scoreId, scoreId));
-
-                return simpleComments.map(comment => ({
-                    id: comment.id,
-                    scoreId: comment.scoreId,
-                    userId: comment.userId,
-                    content: comment.content,
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt,
-                    user: {
-                        id: comment.userId,
-                        name: "Unknown User",
-                        image: "",
-                    },
-                }));
-            } catch (fallbackError) {
-                console.error("Fallback query also failed:", fallbackError);
-                throw error;
-            }
-        }
+    if (!comment) {
+      throw notFound("Comment not found");
     }
 
-    /**
-     * Toggle a reaction on a score (add if not exists, remove if exists)
-     */
-    static async toggleReaction(
-        userId: string,
-        scoreId: string,
-        emojiType: EmojiType
-    ): Promise<void> {
-        // Check if user can interact with this score
-        const canInteract = await this.canUserInteractWithScore(userId, scoreId);
-        if (!canInteract) {
-            throw new Error("You do not have permission to react to this score");
-        }
+    const isAuthor = comment.userId === userId;
+    const ownsScore = comment.score?.userId === userId;
 
-        // Check if reaction already exists
-        const existingReaction = await db.query.scoreReactions.findFirst({
-            where: and(
-                eq(scoreReactions.scoreId, scoreId),
-                eq(scoreReactions.userId, userId),
-                eq(scoreReactions.emojiType, emojiType)
-            ),
-        });
-
-        if (existingReaction) {
-            // Remove the reaction
-            await db.delete(scoreReactions).where(eq(scoreReactions.id, existingReaction.id));
-        } else {
-            // Add the reaction
-            await db.insert(scoreReactions).values({
-                scoreId,
-                userId,
-                emojiType,
-            });
-        }
+    if (!isAuthor && !ownsScore) {
+      throw forbidden("You can only delete your own comments");
     }
 
-    /**
-     * Get all reactions for a score
-     */
-    static async getReactionsForScore(scoreId: string): Promise<ScoreReaction[]> {
-        try {
-            const reactions = await db.query.scoreReactions.findMany({
-                where: eq(scoreReactions.scoreId, scoreId),
-                with: {
-                    user: {
-                        columns: {
-                            id: true,
-                            name: true,
-                            image: true,
-                        },
-                    },
-                },
-                orderBy: (fields, { asc }) => asc(fields.createdAt),
-            });
+    await db.delete(scoreComments).where(eq(scoreComments.id, commentId));
+  }
 
-            return reactions.map(reaction => ({
-                id: reaction.id,
-                scoreId: reaction.scoreId,
-                userId: reaction.userId,
-                emojiType: reaction.emojiType as EmojiType,
-                createdAt: reaction.createdAt,
-                user: reaction.user,
-            }));
-        } catch (error) {
-            console.error(`Error fetching reactions with relations for score ${scoreId}:`, error);
+  /**
+   * Comments on a score, filtered to authors whose activity this viewer may
+   * see. Callers must already have established that the viewer can see the
+   * score itself - use `getInteractionsForScore`, which does both.
+   */
+  static async getCommentsForScore(
+    scoreId: string,
+    viewerId: string
+  ): Promise<ScoreComment[]> {
+    const visibleAuthorIds =
+      await VisibilityService.getVisibleInteractionAuthorIds(viewerId);
 
-            // Fallback to simple query without relations
-            try {
-                console.log("Falling back to simple query without user relations");
-                const simpleReactions = await db.select().from(scoreReactions).where(eq(scoreReactions.scoreId, scoreId));
+    return await db.query.scoreComments.findMany({
+      where: and(
+        eq(scoreComments.scoreId, scoreId),
+        inArray(scoreComments.userId, visibleAuthorIds)
+      ),
+      with: { user: { columns: PUBLIC_USER_COLUMNS } },
+      orderBy: (fields, { asc }) => asc(fields.createdAt),
+    });
+  }
 
-                return simpleReactions.map(reaction => ({
-                    id: reaction.id,
-                    scoreId: reaction.scoreId,
-                    userId: reaction.userId,
-                    emojiType: reaction.emojiType as EmojiType,
-                    createdAt: reaction.createdAt,
-                    user: {
-                        id: reaction.userId,
-                        name: "Unknown User",
-                        image: "",
-                    },
-                }));
-            } catch (fallbackError) {
-                console.error("Fallback query also failed:", fallbackError);
-                throw error;
-            }
-        }
+  static async toggleReaction(
+    userId: string,
+    scoreId: string,
+    emojiType: EmojiType
+  ): Promise<void> {
+    await VisibilityService.requireInteractableScore(userId, scoreId);
+
+    const existing = await db.query.scoreReactions.findFirst({
+      where: and(
+        eq(scoreReactions.scoreId, scoreId),
+        eq(scoreReactions.userId, userId),
+        eq(scoreReactions.emojiType, emojiType)
+      ),
+    });
+
+    if (existing) {
+      await db.delete(scoreReactions).where(eq(scoreReactions.id, existing.id));
+      return;
     }
 
-    /**
-     * Get reaction summary for a score (aggregated by emoji type)
-     */
-    static async getReactionSummary(
-        scoreId: string,
-        currentUserId?: string
-    ): Promise<ReactionSummary> {
-        try {
-            const reactions = await this.getReactionsForScore(scoreId);
+    await db
+      .insert(scoreReactions)
+      .values({ scoreId, userId, emojiType })
+      // The unique constraint makes a double-click a no-op rather than a 500.
+      .onConflictDoNothing();
+  }
 
-            const summary: ReactionSummary = {
-                "👍": { count: 0, users: [], userHasReacted: false },
-                "🔥": { count: 0, users: [], userHasReacted: false },
-                "😮": { count: 0, users: [], userHasReacted: false },
-                "😂": { count: 0, users: [], userHasReacted: false },
-                "❤️": { count: 0, users: [], userHasReacted: false },
-                "🎉": { count: 0, users: [], userHasReacted: false },
-            };
+  /**
+   * Reaction tallies for a score, counting only reactors this viewer may see.
+   * Counts are therefore per-viewer: a private user's reaction is invisible to
+   * strangers, including in the number.
+   */
+  static async getReactionSummary(
+    scoreId: string,
+    viewerId: string
+  ): Promise<ReactionSummary> {
+    const visibleAuthorIds =
+      await VisibilityService.getVisibleInteractionAuthorIds(viewerId);
 
-            reactions.forEach(reaction => {
-                const emojiType = reaction.emojiType;
-                const emojiData = summary[emojiType];
-                if (emojiData) {
-                    emojiData.count++;
-                    emojiData.users.push({
-                        id: reaction.user.id,
-                        name: reaction.user.name,
-                    });
+    const reactions = await db.query.scoreReactions.findMany({
+      where: and(
+        eq(scoreReactions.scoreId, scoreId),
+        inArray(scoreReactions.userId, visibleAuthorIds)
+      ),
+      with: { user: { columns: PUBLIC_USER_COLUMNS } },
+      orderBy: (fields, { asc }) => asc(fields.createdAt),
+    });
 
-                    if (currentUserId && reaction.userId === currentUserId) {
-                        emojiData.userHasReacted = true;
-                    }
-                }
-            });
+    const summary = EMPTY_REACTION_SUMMARY();
 
-            return summary;
-        } catch (error) {
-            console.error(`Error generating reaction summary for score ${scoreId}:`, error);
-            throw error;
-        }
+    for (const reaction of reactions) {
+      const entry = summary[reaction.emojiType as EmojiType];
+      if (!entry) {
+        continue;
+      }
+
+      entry.count += 1;
+      entry.users.push({ id: reaction.user.id, name: reaction.user.name });
+      if (reaction.userId === viewerId) {
+        entry.userHasReacted = true;
+      }
     }
 
-    /**
-     * Check if a user can interact with a score based on privacy settings
-     */
-    static async canUserInteractWithScore(
-        userId: string,
-        scoreId: string
-    ): Promise<boolean> {
-        // Get the score and its owner
-        const score = await db.query.gameScoreEntries.findFirst({
-            where: eq(gameScoreEntries.id, scoreId),
-            with: {
-                user: {
-                    columns: {
-                        id: true,
-                        isPrivate: true,
-                    },
-                },
-            },
-        });
+    return summary;
+  }
 
-        if (!score) {
-            return false;
-        }
+  /**
+   * Everything attached to a score, for a viewer who is allowed to see it.
+   * This is the only entry point the API should use: it checks score
+   * visibility first, then filters authors.
+   */
+  static async getInteractionsForScore(
+    scoreId: string,
+    viewerId: string
+  ): Promise<ScoreInteractions> {
+    await VisibilityService.requireViewableScore(viewerId, scoreId);
 
-        // Users can always interact with their own scores
-        if (score.userId === userId) {
-            return true;
-        }
+    const [comments, reactions] = await Promise.all([
+      this.getCommentsForScore(scoreId, viewerId),
+      this.getReactionSummary(scoreId, viewerId),
+    ]);
 
-        // If the score owner has public settings, anyone can interact
-        if (!score.user.isPrivate) {
-            return true;
-        }
-
-        // If the score owner has private settings, check if they are friends
-        const friendship = await db.query.friendships.findFirst({
-            where: and(
-                eq(friendships.userId, score.userId),
-                eq(friendships.friendId, userId)
-            ),
-        });
-
-        return !!friendship;
-    }
-
-    /**
-     * Get all interactions (comments and reactions) for a score
-     */
-    static async getInteractionsForScore(
-        scoreId: string,
-        currentUserId?: string
-    ): Promise<ScoreInteractions> {
-        try {
-            const [comments, reactionSummary] = await Promise.all([
-                this.getCommentsForScore(scoreId),
-                this.getReactionSummary(scoreId, currentUserId),
-            ]);
-
-            return {
-                comments,
-                reactions: reactionSummary,
-            };
-        } catch (error) {
-            console.error(`Error in getInteractionsForScore for score ${scoreId}:`, error);
-            throw error;
-        }
-    }
+    return { comments, reactions };
+  }
 }

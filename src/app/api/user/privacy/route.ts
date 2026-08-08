@@ -1,76 +1,76 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
-import db from "@/db";
-import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET() {
-    try {
-        const session = await getServerSession(options);
+import db from "@/db";
+import { users } from "@/db/schema";
+import {
+  badRequest,
+  noStore,
+  requireApiUser,
+  requireApiWrite,
+  withApi,
+} from "@/lib/api";
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
 
-        const user = await db.query.users.findFirst({
-            where: eq(users.id, session.user.id),
-            columns: {
-                isPrivate: true,
-            },
-        });
+export type PrivacySettings = {
+  /** Who may see the scores you post. */
+  isPrivate: boolean;
+  /** Who may see your comments and reactions, wherever they appear. */
+  interactionsPrivate: boolean;
+};
 
-        return NextResponse.json({ isPrivate: user?.isPrivate || false }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching privacy setting:", error);
+export const GET = withApi(async () => {
+  const { user } = await requireApiUser();
 
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
+  const row = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
+    columns: { isPrivate: true, interactionsPrivate: true },
+  });
+
+  const settings: PrivacySettings = {
+    isPrivate: row?.isPrivate ?? false,
+    interactionsPrivate: row?.interactionsPrivate ?? false,
+  };
+
+  return NextResponse.json(settings, { status: 200, headers: noStore });
+});
+
+export const PUT = withApi(async (request: NextRequest) => {
+  const { user } = await requireApiWrite();
+
+  const body = await request.json();
+  const update: Partial<PrivacySettings> = {};
+
+  if ("isPrivate" in body) {
+    if (typeof body.isPrivate !== "boolean") {
+      throw badRequest("isPrivate must be a boolean");
     }
-}
+    update.isPrivate = body.isPrivate;
+  }
 
-export async function PUT(request: NextRequest) {
-    try {
-        const session = await getServerSession(options);
-
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
-
-        const body = await request.json();
-        const { isPrivate } = body;
-
-        if (typeof isPrivate !== "boolean") {
-            return NextResponse.json(
-                { error: "Bad Request", message: "isPrivate must be a boolean" },
-                { status: 400 }
-            );
-        }
-
-        await db
-            .update(users)
-            .set({ isPrivate })
-            .where(eq(users.id, session.user.id));
-
-        return NextResponse.json(
-            { message: "Privacy setting updated successfully", isPrivate },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error updating privacy setting:", error);
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
+  if ("interactionsPrivate" in body) {
+    if (typeof body.interactionsPrivate !== "boolean") {
+      throw badRequest("interactionsPrivate must be a boolean");
     }
-}
+    update.interactionsPrivate = body.interactionsPrivate;
+  }
+
+  if (Object.keys(update).length === 0) {
+    throw badRequest("Nothing to update");
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set(update)
+    .where(eq(users.id, user.id))
+    .returning({
+      isPrivate: users.isPrivate,
+      interactionsPrivate: users.interactionsPrivate,
+    });
+
+  return NextResponse.json(updated, { status: 200, headers: noStore });
+});

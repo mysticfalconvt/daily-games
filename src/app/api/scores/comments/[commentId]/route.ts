@@ -1,47 +1,24 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import options from "@/config/auth";
+import { requireApiWrite, withApi } from "@/lib/api";
 import { ScoreInteractionService } from "@/services/score-interaction-service";
 
-export async function DELETE(
+// Per-user and never cacheable. Declared so the build does not try to
+// statically evaluate a handler that needs the session.
+export const dynamic = "force-dynamic";
+
+export const DELETE = withApi(
+  async (
     request: NextRequest,
     { params }: { params: { commentId: string } }
-) {
-    try {
-        const session = await getServerSession(options);
+  ) => {
+    const { user } = await requireApiWrite();
 
-        if (!session?.user?.id) {
-            return NextResponse.json(
-                { error: "Unauthorized", message: "You must be logged in" },
-                { status: 401 }
-            );
-        }
+    await ScoreInteractionService.deleteComment(user.id, params.commentId);
 
-        await ScoreInteractionService.deleteComment(session.user.id, params.commentId);
-
-        return NextResponse.json(
-            { message: "Comment deleted successfully" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("Error deleting comment:", error);
-
-        if (error instanceof Error) {
-            const statusCode =
-                error.message === "Comment not found" ? 404 :
-                    error.message === "You can only delete your own comments" ? 403 :
-                        500;
-
-            return NextResponse.json(
-                { error: "Request Failed", message: error.message },
-                { status: statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal Server Error", message: "Something went wrong" },
-            { status: 500 }
-        );
-    }
-}
+    return NextResponse.json(
+      { message: "Comment deleted successfully" },
+      { status: 200 }
+    );
+  }
+);

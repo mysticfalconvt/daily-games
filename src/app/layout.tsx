@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import AppNavbar from "@/components/app-navbar";
 import Providers from "@/components/providers";
 import { env } from "@/env/server";
@@ -37,6 +38,7 @@ export default function RootLayout({
       </head>
       <body className="h-screen w-screen">
         <Providers>
+          <ImpersonationBanner />
           <AppNavbar />
           <main className="flex-grow overflow-auto bg-[url(/light-bg.svg)] bg-cover dark:bg-[url(/dark-bg.svg)]">
             <Suspense>{children}</Suspense>

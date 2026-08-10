@@ -1,0 +1,1 @@
+ALTER TABLE "gameScore_entries" ADD COLUMN "duration_ms" integer;

@@ -11,6 +11,8 @@ import { useFormState } from "react-dom";
 import { createGameScoreEntry } from "@/app/actions";
 import { InsertGameScoreEntrySchema } from "@/db/schema/game-score-entries";
 import { GameType } from "@/types/types";
+import { clearGameOpen, peekElapsedSinceOpen } from "@/utils/game-open-tracker";
+import { formatDuration } from "@/utils/game-timing";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
 import { getGameType } from "./get-game-type";
@@ -25,6 +27,7 @@ export default function AddGameScoreForm() {
   const [gameRating, setGameRating] = React.useState(0);
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [durationMs, setDurationMs] = React.useState<number | null>(null);
 
   // Trigger router refresh when form is successfully submitted
   React.useEffect(() => {
@@ -47,11 +50,15 @@ export default function AddGameScoreForm() {
     },
     onSubmit: () => {
       console.log("submit");
+      if (gameType) {
+        clearGameOpen(gameType);
+      }
       setGameScore("");
       setGameType("");
       setGameRating(0);
       setMessage("");
       setError(null);
+      setDurationMs(null);
     },
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
@@ -70,6 +77,15 @@ export default function AddGameScoreForm() {
     const detectedGameType = getGameType(newScore);
     setGameType(detectedGameType);
     setGameRating(getGameRating(newScore));
+
+    // Measured at paste, not at submit: pasting is when the puzzle actually
+    // ended. Timing all the way to submit would fold in however long they
+    // spent writing a message.
+    setDurationMs(
+      detectedGameType === GameType.UNKNOWN
+        ? null
+        : peekElapsedSinceOpen(detectedGameType)
+    );
 
     // Reset error when user starts typing
     setError(null);
@@ -96,9 +112,18 @@ export default function AddGameScoreForm() {
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Add a score</h2>
           {detected ? (
-            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-              {getPrettyGameType(gameType)}
-            </span>
+            <div className="flex items-center gap-2">
+              {durationMs !== null && (
+                // Tells the player their time is about to be posted, so the
+                // chip on the feed is not a surprise.
+                <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                  ⏱ {formatDuration(durationMs)}
+                </span>
+              )}
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                {getPrettyGameType(gameType)}
+              </span>
+            </div>
           ) : (
             <span className="text-xs text-muted-foreground">
               Paste to detect
@@ -130,6 +155,13 @@ export default function AddGameScoreForm() {
           value={gameRating}
           className="hidden"
           type="number"
+        />
+        {/* Not a conform field - it is omitted from InsertGameScoreEntrySchema
+            and read straight off the form data by the action. */}
+        <input
+          type="hidden"
+          name="durationMs"
+          value={durationMs === null ? "" : durationMs}
         />
 
         <Textarea

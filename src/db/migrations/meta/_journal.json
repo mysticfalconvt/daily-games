@@ -50,6 +50,13 @@
       "when": 1786190298535,
       "tag": "0006_admin_and_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786361531956,
+      "tag": "0007_striped_doctor_doom",
+      "breakpoints": true
     }
   ]
 }

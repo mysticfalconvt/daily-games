@@ -10,6 +10,25 @@ import gameScoreEntries, {
   InsertGameScoreEntrySchema,
 } from "@/db/schema/game-score-entries";
 import { requireUser } from "@/lib/auth-context";
+import { MAX_MEASURED_MS, MIN_MEASURED_MS } from "@/utils/game-timing";
+
+/**
+ * The duration is measured and reported by the browser, so it is only as
+ * trustworthy as the client. Rather than reject a whole score over it, anything
+ * missing, malformed or outside the plausible range is stored as null and the
+ * feed falls back to inferring a time from the gap between posts.
+ */
+function parseDurationMs(raw: FormDataEntryValue | null): number | null {
+  if (typeof raw !== "string" || raw === "") return null;
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return null;
+
+  const ms = Math.round(parsed);
+  if (ms < MIN_MEASURED_MS || ms > MAX_MEASURED_MS) return null;
+
+  return ms;
+}
 
 export async function createGameScoreEntry(
   prevState: unknown,
@@ -60,6 +79,7 @@ export async function createGameScoreEntry(
     gameType: submission.value.gameType,
     score: submission.value.score,
     rating: submission.value.rating,
+    durationMs: parseDurationMs(formData.get("durationMs")),
   });
 
   revalidatePath("/");

@@ -3,6 +3,7 @@
 import { IconExternalLink } from "@tabler/icons-react";
 
 import { GameType } from "@/types/types";
+import { recordGameOpen } from "@/utils/game-open-tracker";
 import { getGameUrl } from "@/utils/get-game-url";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
@@ -72,6 +73,9 @@ export default function AvailableGamesList({
               href={getGameUrl(gameType)}
               target="_blank"
               rel="noopener noreferrer"
+              // Starts the clock for this game. The link still navigates
+              // normally - a failed write just means no measured time.
+              onClick={() => recordGameOpen(gameType)}
               className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
             >
               {getPrettyGameType(gameType)}

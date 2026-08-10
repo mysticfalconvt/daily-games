@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Avatar } from "@nextui-org/react";
 import { useSession } from "next-auth/react";
@@ -8,8 +8,10 @@ import { useSession } from "next-auth/react";
 import { ViewToggle } from "@/components/friends/view-toggle";
 import { ScoreInteractions } from "@/components/interactions/score-interactions";
 import { GAME_RATING_ORDER, GameType, RatingOrder } from "@/types/types";
+import { formatDuration } from "@/utils/game-timing";
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 import { getPrettyScore } from "@/utils/get-pretty-score";
+import { ScoreTiming, getScoreTimings } from "@/utils/get-score-timings";
 
 import { Card } from "./ui/card";
 
@@ -21,6 +23,8 @@ type ScoreEntry = {
   rating: string;
   score: string;
   message: string | null;
+  // Set only when the player opened the game from the app on this device.
+  durationMs: number | null;
   // The feed no longer ships author emails - see PUBLIC_USER_COLUMNS.
   user: {
     id: string;
@@ -34,6 +38,28 @@ type GroupedScores = {
     [gameType: string]: ScoreEntry[];
   };
 };
+
+function TimeChip({ timing }: { timing: ScoreTiming }) {
+  return (
+    <span
+      // Inferred times are guesses, so they are marked with a ~ and sit back
+      // visually rather than reading like a stopwatch result.
+      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
+        timing.measured
+          ? "bg-muted text-foreground/80"
+          : "text-muted-foreground"
+      }`}
+      title={
+        timing.measured
+          ? "Timed from opening the game to posting the score"
+          : "Estimated from the time since this player's previous post"
+      }
+    >
+      ⏱ {timing.measured ? "" : "~"}
+      {formatDuration(timing.ms)}
+    </span>
+  );
+}
 
 export const ScoreCardList = () => {
   const { data: session } = useSession();
@@ -86,6 +112,10 @@ export const ScoreCardList = () => {
       window.removeEventListener("scoreSubmitted", handleScoreSubmitted);
     };
   }, [fetchScores]);
+
+  // Computed over the whole window before it is grouped by day and game -
+  // the post that precedes a score is usually under a different game type.
+  const timings = useMemo(() => getScoreTimings(listOfScores), [listOfScores]);
 
   if (!session?.user) {
     return null;
@@ -192,80 +222,85 @@ export const ScoreCardList = () => {
                     {getPrettyGameType(gameType)}
                   </h3>
                   <div className="flex flex-col divide-y">
-                    {sortedScores.map((score) => (
-                      <div
-                        key={score.id}
-                        className={`flex flex-col gap-2 px-5 py-4 ${
-                          score.user.id === session.user.id
-                            ? "bg-primary/[0.06]"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Avatar
-                            className="h-7 w-7 shrink-0"
-                            showFallback={!score.user?.image}
-                            src={score.user?.image || ""}
-                            fallback={score.user?.name}
-                          />
-                          <h4 className="flex-1 truncate text-sm font-semibold">
-                            {score.user.name}
-                            {score.user.id === session.user.id && (
-                              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                                you
-                              </span>
-                            )}
-                          </h4>
-                          <div className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
-                            {score.rating}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="whitespace-pre-wrap text-base leading-relaxed">
-                            {(() => {
-                              const prettyScore = getPrettyScore(
-                                gameType as GameType,
-                                score.score
-                              );
-                              if (
-                                gameType === GameType.ENSPELLED &&
-                                prettyScore.includes("[link]")
-                              ) {
-                                const [boxes, link] =
-                                  prettyScore.split("[link]");
-                                return (
-                                  <>
-                                    {boxes}{" "}
-                                    <a
-                                      href={link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                    >
-                                      link
-                                    </a>
-                                  </>
-                                );
-                              }
-                              return prettyScore;
-                            })()}
-                          </p>
-                          {score.message && (
-                            // Was a fixed mid-grey, near-invisible in dark mode.
-                            <p className="text-sm text-muted-foreground">
-                              {score.message}
-                            </p>
-                          )}
-                        </div>
+                    {sortedScores.map((score) => {
+                      const timing = timings.get(score.id);
 
-                        {/* Score Interactions */}
-                        <ScoreInteractions
-                          scoreId={score.id}
-                          currentUserId={session.user.id}
-                          scoreOwnerId={score.userId}
-                        />
-                      </div>
-                    ))}
+                      return (
+                        <div
+                          key={score.id}
+                          className={`flex flex-col gap-2 px-5 py-4 ${
+                            score.user.id === session.user.id
+                              ? "bg-primary/[0.06]"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Avatar
+                              className="h-7 w-7 shrink-0"
+                              showFallback={!score.user?.image}
+                              src={score.user?.image || ""}
+                              fallback={score.user?.name}
+                            />
+                            <h4 className="flex-1 truncate text-sm font-semibold">
+                              {score.user.name}
+                              {score.user.id === session.user.id && (
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                  you
+                                </span>
+                              )}
+                            </h4>
+                            {timing && <TimeChip timing={timing} />}
+                            <div className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
+                              {score.rating}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <p className="whitespace-pre-wrap text-base leading-relaxed">
+                              {(() => {
+                                const prettyScore = getPrettyScore(
+                                  gameType as GameType,
+                                  score.score
+                                );
+                                if (
+                                  gameType === GameType.ENSPELLED &&
+                                  prettyScore.includes("[link]")
+                                ) {
+                                  const [boxes, link] =
+                                    prettyScore.split("[link]");
+                                  return (
+                                    <>
+                                      {boxes}{" "}
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                                      >
+                                        link
+                                      </a>
+                                    </>
+                                  );
+                                }
+                                return prettyScore;
+                              })()}
+                            </p>
+                            {score.message && (
+                              // Was a fixed mid-grey, near-invisible in dark mode.
+                              <p className="text-sm text-muted-foreground">
+                                {score.message}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Score Interactions */}
+                          <ScoreInteractions
+                            scoreId={score.id}
+                            currentUserId={session.user.id}
+                            scoreOwnerId={score.userId}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
               );

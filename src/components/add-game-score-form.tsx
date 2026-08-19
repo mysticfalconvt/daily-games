@@ -195,13 +195,17 @@ const getGameRating = (gameScore: string) => {
     return 0;
   }
   if (gameType === GameType.MINI_CROSSWORD) {
-    // paste looks like this:
+    // paste is one of two share links, both carrying the time in seconds as t:
     // https://www.nytimes.com/badges/games/mini.html?d=2024-09-29&t=38&c=6e91a31c0d103588059bfc260f2bd1cc&smid=url-share
-    // we need to get the time from the url in this case it is t=38
-    if (gameScore.includes("https://www.nytimes.com/badges/games/mini")) {
-      const url = new URL(gameScore);
-      const time = url.searchParams.get("t");
-      if (time) {
+    // https://www.nytimes.com/shared/v2/mini-xwd.html?d=2026-08-19&t=99&c=d42cf945544bd2f30b9df22bc18b4599&smid=url-share
+    // Matched out of the text rather than parsed as a whole URL, since the
+    // paste can carry surrounding whitespace or text.
+    const urlMatch = gameScore.match(
+      /https:\/\/www\.nytimes\.com\/(?:badges\/games\/mini|shared\/v2\/mini-xwd)\.html\?\S+/
+    );
+    if (urlMatch) {
+      const time = new URL(urlMatch[0]).searchParams.get("t");
+      if (time && Number(time) > 0) {
         return Number(time);
       }
     }

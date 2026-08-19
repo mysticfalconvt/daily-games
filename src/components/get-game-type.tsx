@@ -26,6 +26,8 @@ export const getGameType = (gameScore: string) => {
   }
   if (
     gameScore.includes("https://www.nytimes.com/badges/games/mini") ||
+    // Newer share link format the Mini sometimes hands out instead of a badge
+    gameScore.includes("https://www.nytimes.com/shared/v2/mini-xwd") ||
     gameScore.includes("New York Times Mini Crossword")
   ) {
     return GameType.MINI_CROSSWORD;

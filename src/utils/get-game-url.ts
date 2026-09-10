@@ -30,6 +30,8 @@ export function getGameUrl(gameType: GameType): string {
       return "https://www.nytimes.com/games/pips/hard";
     case GameType.SCRANDLE:
       return "https://scrandle.com/";
+    case GameType.COSMEREDLE:
+      return "https://cosmeredle.net/";
     default:
       return "#";
   }

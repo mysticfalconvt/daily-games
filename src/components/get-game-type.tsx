@@ -68,5 +68,12 @@ export const getGameType = (gameScore: string) => {
     return GameType.SCRANDLE;
   }
 
+  if (
+    /I got today'?s Cosmeredle in \d+ tries!/i.test(gameScore) ||
+    gameScore.includes("https://cosmeredle.net")
+  ) {
+    return GameType.COSMEREDLE;
+  }
+
   return GameType.UNKNOWN;
 };

@@ -377,5 +377,10 @@ const getGameRating = (gameScore: string) => {
     return 0;
   }
 
+  if (gameType === GameType.COSMEREDLE) {
+    const triesMatch = gameScore.match(/Cosmeredle in\s+(\d+)\s+tries/i);
+    return triesMatch ? parseInt(triesMatch[1], 10) : 0;
+  }
+
   return 0;
 };

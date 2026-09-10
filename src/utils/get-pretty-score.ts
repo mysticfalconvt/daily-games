@@ -151,6 +151,16 @@ export const getPrettyScore = (gameType: GameType, score: string): string => {
         return scrandleBoxesMatch ? scrandleBoxesMatch[0] : score;
       }
       return score;
+    case GameType.COSMEREDLE:
+      // Keep the guess grid while omitting the share caption and challenge link.
+      const cosmeredleGrid = score
+        .split("\n")
+        .filter(
+          (line) =>
+            line.includes("🟥") || line.includes("🟨") || line.includes("🟩")
+        )
+        .join("\n");
+      return cosmeredleGrid || score;
     case GameType.UNKNOWN:
       return score;
     default:

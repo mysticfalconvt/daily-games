@@ -31,6 +31,8 @@ export const getPrettyGameType = (gameType: string) => {
       return "Pips";
     case GameType.SCRANDLE:
       return "Scrandle";
+    case GameType.COSMEREDLE:
+      return "Cosmeredle";
     default:
       return "Unknown";
   }

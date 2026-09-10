@@ -18,6 +18,7 @@ export enum GameType {
   ENSPELLED = "ENSPELLED",
   PIPS = "PIPS",
   SCRANDLE = "SCRANDLE",
+  COSMEREDLE = "COSMEREDLE",
   UNKNOWN = "UNKNOWN",
 }
 
@@ -36,5 +37,6 @@ export const GAME_RATING_ORDER: Record<GameType, RatingOrder> = {
   [GameType.ENSPELLED]: RatingOrder.LOWEST_FIRST,
   [GameType.PIPS]: RatingOrder.LOWEST_FIRST,
   [GameType.SCRANDLE]: RatingOrder.HIGHEST_FIRST,
+  [GameType.COSMEREDLE]: RatingOrder.LOWEST_FIRST,
   [GameType.UNKNOWN]: RatingOrder.LOWEST_FIRST,
 };

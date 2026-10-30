@@ -64,6 +64,13 @@
       "when": 1793356060581,
       "tag": "0008_fair_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793356178497,
+      "tag": "0009_bitter_maximus",
+      "breakpoints": true
     }
   ]
 }

@@ -69,6 +69,27 @@ The main branch contains the entire setup. The following branches build on each 
 
 ## Setup
 
+### Comment notifications and web push
+
+The bell shows unread comments on your scores. Apply the database migrations
+with `pnpm db:migrate` before deploying the notification changes.
+
+Browser/device push is optional. Serve the app over HTTPS (localhost also works
+for development), generate a VAPID key pair once with
+`pnpm exec web-push generate-vapid-keys`, and configure `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (for example,
+`mailto:admin@example.com`) in the server environment. Keep the private key
+secret and keep the same key pair across deployments; changing it requires users
+to disable and then enable notifications again on each device. Restart the app
+after setting them.
+
+Open the bell and select **Enable** under Device notifications on each device.
+On iOS/iPadOS 16.4 or later, first add the site to the Home Screen and open it
+from there. Browser and operating system permissions must allow notifications.
+Use **Disable** on each device to unsubscribe. Push messages contain no comment
+text or author name; they are best effort and the in-app bell remains the record
+of unread comments. Push is sent only to supported browser push services.
+
 1. Install dependencies:
 
 ```sh

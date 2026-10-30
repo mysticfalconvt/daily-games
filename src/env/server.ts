@@ -14,6 +14,9 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     UMAMI_ID: z.string().optional(),
+    VAPID_PUBLIC_KEY: z.string().optional(),
+    VAPID_PRIVATE_KEY: z.string().optional(),
+    VAPID_SUBJECT: z.string().optional(),
     // Comma-separated emails that are granted the admin role on sign-in. This
     // is the bootstrap path: prod already has users, so there is no
     // "first user wins" moment left to hook into.

@@ -32,6 +32,7 @@ export const RATE_LIMITS = {
   comment: { limit: 20, windowMs: 60_000 },
   reaction: { limit: 60, windowMs: 60_000 },
   impersonate: { limit: 20, windowMs: 60_000 },
+  pushSubscription: { limit: 20, windowMs: 60_000 },
 } satisfies Record<string, RateLimit>;
 
 export function enforceRateLimit(

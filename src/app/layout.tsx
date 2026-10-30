@@ -11,6 +11,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Daily Game Scores",
   description: "A place for friends to share their daily game scores",
+  appleWebApp: { capable: true, title: "Daily Scores" },
+  icons: { apple: "/icon-192.png" },
 };
 
 export default function RootLayout({

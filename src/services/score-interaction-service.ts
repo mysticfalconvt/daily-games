@@ -15,6 +15,7 @@ import {
   ScoreInteractions,
 } from "@/types/interactions";
 
+import { sendCommentPush } from "./push-service";
 import { VisibilityService } from "./visibility-service";
 
 const EMPTY_REACTION_SUMMARY = (): ReactionSummary => ({
@@ -71,6 +72,15 @@ export class ScoreInteractionService {
 
     if (!comment) {
       throw new Error("Failed to load the comment that was just created");
+    }
+
+    if (score.userId !== userId) {
+      try {
+        await sendCommentPush(score.userId, userId, scoreId);
+      } catch (error) {
+        // The comment has already committed; push failure must not make it look unsaved.
+        console.error("Failed to send comment push:", error);
+      }
     }
 
     return comment;

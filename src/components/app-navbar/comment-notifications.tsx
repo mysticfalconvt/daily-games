@@ -8,6 +8,8 @@ import { Bell } from "lucide-react";
 
 import { getPrettyGameType } from "@/utils/get-pretty-game-type";
 
+import { PushSettings } from "./push-settings";
+
 type Item = {
   id: string;
   readAt: string | null;
@@ -35,6 +37,11 @@ export function CommentNotifications() {
   }, []);
 
   useEffect(() => {
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
+        console.error("Failed to register notification service worker:", error);
+      });
+    }
     void refresh();
     const interval = setInterval(refresh, 30000);
     const onVisibility = () => {
@@ -128,6 +135,7 @@ export function CommentNotifications() {
               ))
             )}
           </div>
+          <PushSettings />
         </div>
       )}
     </div>

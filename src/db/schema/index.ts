@@ -15,6 +15,7 @@ export {
   gameScoreEntriesRelations,
 } from "./game-score-entries";
 export { default as loginEvents, loginEventsRelations } from "./login-events";
+export { default as notifications } from "./notifications";
 export {
   default as scoreComments,
   scoreCommentsRelations,

@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import db from "@/db";
 import {
   PUBLIC_USER_COLUMNS,
+  notifications,
   scoreComments,
   scoreReactions,
 } from "@/db/schema";
@@ -44,12 +45,24 @@ export class ScoreInteractionService {
       );
     }
 
-    await VisibilityService.requireInteractableScore(userId, scoreId);
+    const score = await VisibilityService.requireInteractableScore(
+      userId,
+      scoreId
+    );
 
-    const [inserted] = await db
-      .insert(scoreComments)
-      .values({ scoreId, userId, content: trimmed })
-      .returning();
+    const inserted = await db.transaction(async (tx) => {
+      const [comment] = await tx
+        .insert(scoreComments)
+        .values({ scoreId, userId, content: trimmed })
+        .returning();
+      if (score.userId !== userId) {
+        await tx.insert(notifications).values({
+          recipientId: score.userId,
+          commentId: comment.id,
+        });
+      }
+      return comment;
+    });
 
     const comment = await db.query.scoreComments.findFirst({
       where: eq(scoreComments.id, inserted.id),

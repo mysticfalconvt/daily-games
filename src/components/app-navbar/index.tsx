@@ -17,6 +17,7 @@ import { useSession } from "next-auth/react";
 
 import { NotificationBadge } from "../friends/notification-badge";
 import AuthButton from "./auth-button";
+import { CommentNotifications } from "./comment-notifications";
 import { ThemeSwitcher } from "./theme-switcher";
 
 type MenuItem = { label: string; href: string };
@@ -102,6 +103,11 @@ export default function AppNavbar() {
       </NavbarContent>
 
       <NavbarContent justify="end" className="gap-1">
+        {status === "authenticated" && (
+          <NavbarItem>
+            <CommentNotifications />
+          </NavbarItem>
+        )}
         <NavbarItem>
           <ThemeSwitcher />
         </NavbarItem>

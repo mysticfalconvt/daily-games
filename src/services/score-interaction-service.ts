@@ -51,18 +51,27 @@ export class ScoreInteractionService {
       scoreId
     );
 
-    const inserted = await db.transaction(async (tx) => {
+    const { inserted, recipients } = await db.transaction(async (tx) => {
+      const previousCommenters = await tx
+        .selectDistinct({ userId: scoreComments.userId })
+        .from(scoreComments)
+        .where(eq(scoreComments.scoreId, scoreId));
+      const recipients = Array.from(
+        new Set([score.userId, ...previousCommenters.map((row) => row.userId)])
+      ).filter((recipientId) => recipientId !== userId);
       const [comment] = await tx
         .insert(scoreComments)
         .values({ scoreId, userId, content: trimmed })
         .returning();
-      if (score.userId !== userId) {
-        await tx.insert(notifications).values({
-          recipientId: score.userId,
-          commentId: comment.id,
-        });
+      if (recipients.length) {
+        await tx.insert(notifications).values(
+          recipients.map((recipientId) => ({
+            recipientId,
+            commentId: comment.id,
+          }))
+        );
       }
-      return comment;
+      return { inserted: comment, recipients };
     });
 
     const comment = await db.query.scoreComments.findFirst({
@@ -74,14 +83,16 @@ export class ScoreInteractionService {
       throw new Error("Failed to load the comment that was just created");
     }
 
-    if (score.userId !== userId) {
-      try {
-        await sendCommentPush(score.userId, userId, scoreId);
-      } catch (error) {
-        // The comment has already committed; push failure must not make it look unsaved.
-        console.error("Failed to send comment push:", error);
-      }
-    }
+    await Promise.all(
+      recipients.map(async (recipientId) => {
+        try {
+          await sendCommentPush(recipientId, userId, scoreId);
+        } catch (error) {
+          // The comment has already committed; push failure must not make it look unsaved.
+          console.error("Failed to send comment push:", error);
+        }
+      })
+    );
 
     return comment;
   }

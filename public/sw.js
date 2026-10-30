@@ -9,7 +9,7 @@ self.addEventListener("push", (event) => {
   } catch (_) {}
   event.waitUntil(
     self.registration.showNotification("Daily Game Scores", {
-      body: "There is new activity on one of your scores.",
+      body: "There is a new comment on a score you follow.",
       icon: "/icon-192.png",
       badge: "/icon-192.png",
       data: { url },

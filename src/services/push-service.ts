@@ -14,6 +14,15 @@ export async function sendCommentPush(
 ) {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY || !env.VAPID_SUBJECT)
     return;
+  const score = await db.query.gameScoreEntries.findFirst({
+    where: (fields, { eq }) => eq(fields.id, scoreId),
+    columns: { userId: true },
+  });
+  if (
+    !score ||
+    !(await VisibilityService.canViewScoresOf(recipientId, score.userId))
+  )
+    return;
   const visibleAuthors =
     await VisibilityService.getVisibleInteractionAuthorIds(recipientId);
   if (!visibleAuthors.includes(authorId)) return;

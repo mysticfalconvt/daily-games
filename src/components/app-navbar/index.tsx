@@ -103,9 +103,9 @@ export default function AppNavbar() {
       </NavbarContent>
 
       <NavbarContent justify="end" className="gap-1">
-        {status === "authenticated" && (
+        {status === "authenticated" && session?.user?.id && (
           <NavbarItem>
-            <CommentNotifications />
+            <CommentNotifications currentUserId={session.user.id} />
           </NavbarItem>
         )}
         <NavbarItem>

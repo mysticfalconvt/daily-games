@@ -22,12 +22,14 @@ export const dynamic = "force-dynamic";
 
 export const GET = withApi(async () => {
   const { user } = await requireApiUser();
-  const visibleAuthors = await VisibilityService.getVisibleInteractionAuthorIds(
-    user.id
-  );
+  const [visibleAuthors, visibleOwners] = await Promise.all([
+    VisibilityService.getVisibleInteractionAuthorIds(user.id),
+    VisibilityService.getVisibleScoreOwnerIds(user.id),
+  ]);
   const visible = and(
     eq(notifications.recipientId, user.id),
-    inArray(scoreComments.userId, visibleAuthors)
+    inArray(scoreComments.userId, visibleAuthors),
+    inArray(gameScoreEntries.userId, visibleOwners)
   );
   const [items, unread] = await Promise.all([
     db
@@ -37,6 +39,7 @@ export const GET = withApi(async () => {
         createdAt: notifications.createdAt,
         scoreId: gameScoreEntries.id,
         gameType: gameScoreEntries.gameType,
+        scoreOwnerId: gameScoreEntries.userId,
         author: users.name,
       })
       .from(notifications)
@@ -53,6 +56,10 @@ export const GET = withApi(async () => {
       .select({ count: count() })
       .from(notifications)
       .innerJoin(scoreComments, eq(notifications.commentId, scoreComments.id))
+      .innerJoin(
+        gameScoreEntries,
+        eq(scoreComments.scoreId, gameScoreEntries.id)
+      )
       .where(and(visible, isNull(notifications.readAt))),
   ]);
   return NextResponse.json(
@@ -65,12 +72,23 @@ export const POST = withApi(async (request: NextRequest) => {
   const { user } = await requireApiWrite();
   const body = await request.json();
   if (body?.all === true) {
-    const visibleAuthors =
-      await VisibilityService.getVisibleInteractionAuthorIds(user.id);
+    const [visibleAuthors, visibleOwners] = await Promise.all([
+      VisibilityService.getVisibleInteractionAuthorIds(user.id),
+      VisibilityService.getVisibleScoreOwnerIds(user.id),
+    ]);
     const visibleComments = db
       .select({ id: scoreComments.id })
       .from(scoreComments)
-      .where(inArray(scoreComments.userId, visibleAuthors));
+      .innerJoin(
+        gameScoreEntries,
+        eq(scoreComments.scoreId, gameScoreEntries.id)
+      )
+      .where(
+        and(
+          inArray(scoreComments.userId, visibleAuthors),
+          inArray(gameScoreEntries.userId, visibleOwners)
+        )
+      );
     await db
       .update(notifications)
       .set({ readAt: new Date() })

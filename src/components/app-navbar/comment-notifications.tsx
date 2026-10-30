@@ -16,9 +16,14 @@ type Item = {
   scoreId: string;
   gameType: string;
   author: string | null;
+  scoreOwnerId: string;
 };
 
-export function CommentNotifications() {
+export function CommentNotifications({
+  currentUserId,
+}: {
+  currentUserId: string;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -128,8 +133,12 @@ export function CommentNotifications() {
                   onClick={() => void openItem(item)}
                   className={`block w-full rounded p-2 text-left text-sm hover:bg-muted ${!item.readAt ? "font-semibold" : "text-muted-foreground"}`}
                 >
-                  {item.author || "Someone"} commented on your{" "}
+                  {item.author || "Someone"} commented on{" "}
+                  {item.scoreOwnerId === currentUserId ? "your" : "a"}{" "}
                   {getPrettyGameType(item.gameType)} score
+                  {item.scoreOwnerId !== currentUserId
+                    ? " you commented on"
+                    : ""}
                   {!item.readAt ? " •" : ""}
                 </button>
               ))

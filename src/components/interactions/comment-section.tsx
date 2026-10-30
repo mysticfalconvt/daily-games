@@ -36,7 +36,8 @@ export const CommentSection = ({
   const [isComposing, setIsComposing] = useState(false);
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || isSubmitting) return;
+    if (!newComment.trim() || newComment.length > 500 || isSubmitting || isLoading)
+      return;
 
     setIsSubmitting(true);
     setCommentError(null);
@@ -104,11 +105,21 @@ export const CommentSection = ({
               placeholder="Add a comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing
+                ) {
+                  e.preventDefault();
+                  void handleSubmitComment();
+                }
+              }}
               maxLength={500}
               minRows={2}
               maxRows={4}
               autoFocus
-              disabled={isLoading || isSubmitting}
+              isDisabled={isLoading || isSubmitting}
               classNames={{
                 input: "text-sm text-foreground",
                 inputWrapper:
@@ -117,27 +128,28 @@ export const CommentSection = ({
             />
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                {newComment.length}/500
+                {newComment.length}/500 · Shift+Enter for a new line
               </span>
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="light"
-                  onClick={() => {
+                  onPress={() => {
                     setIsComposing(false);
                     setNewComment("");
                     setCommentError(null);
                   }}
-                  disabled={isSubmitting}
+                  isDisabled={isSubmitting}
                 >
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   color="primary"
-                  onClick={handleSubmitComment}
-                  disabled={
+                  onPress={handleSubmitComment}
+                  isDisabled={
                     !newComment.trim() ||
+                    isLoading ||
                     isSubmitting ||
                     newComment.length > 500
                   }
